@@ -59,48 +59,60 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        // Server-side authentication
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        // Server-side authentication via Edge Function
+        const { data: res, error } = await supabase.functions.invoke('auth', {
+          body: { action: 'login', email, password }
         });
         
-        if (error) {
-          // Map specific Supabase server errors to user-friendly messages
-          if (error.message.includes('Invalid login credentials')) {
+        if (error || res?.error) {
+          const errMsg = error?.message || res?.error || '';
+          if (errMsg.includes('Invalid login credentials')) {
             setServerError('Incorrect email or password. Please try again.');
           } else {
-            setServerError(error.message);
+            setServerError(errMsg);
           }
           return;
         }
         
-        setSession(data.session);
+        if (res?.data?.session) {
+          await supabase.auth.setSession({
+            access_token: res.data.session.access_token,
+            refresh_token: res.data.session.refresh_token
+          });
+          setSession(res.data.session);
+        }
         router.replace('/');
       } else {
-        // Server-side registration
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
+        // Server-side registration via Edge Function
+        const { data: res, error } = await supabase.functions.invoke('auth', {
+          body: {
+            action: 'register',
+            email,
+            password,
+            metadata: {
               full_name: fullName,
               phone: phone,
             }
           }
         });
         
-        if (error) {
-          // Handle Supabase sign up errors (e.g. email already exists)
-          if (error.message.includes('already registered')) {
+        if (error || res?.error) {
+          const errMsg = error?.message || res?.error || '';
+          if (errMsg.includes('already registered')) {
             setServerError('An account with this email already exists.');
           } else {
-            setServerError(error.message);
+            setServerError(errMsg);
           }
           return;
         }
         
-        setSession(data.session);
+        if (res?.data?.session) {
+          await supabase.auth.setSession({
+            access_token: res.data.session.access_token,
+            refresh_token: res.data.session.refresh_token
+          });
+          setSession(res.data.session);
+        }
         router.replace('/');
       }
     } catch (error: any) {
