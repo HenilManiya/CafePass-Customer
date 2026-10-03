@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, Image } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/shared';
 import { Coffee, ArrowRight, AlertCircle, Eye, EyeOff } from '@/components/Icon';
 import { MotiView, AnimatePresence } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from '@/components/LinearGradient';
 import { CafePassLogo } from '@/components/CafePassLogo';
 
 export default function Login() {
@@ -150,21 +150,20 @@ export default function Login() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-      className="flex-1 bg-black"
+      style={styles.keyboardContainer}
     >
       <LinearGradient 
         colors={['#000000', '#2E1911']} 
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} 
+        style={StyleSheet.absoluteFill} 
       />
       <ScrollView 
-        contentContainerStyle={{ 
-          flexGrow: 1, 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          paddingBottom: Math.max(insets.bottom, 12), 
-          paddingTop: Math.max(insets.top, 12),
-          paddingHorizontal: 16,
-        }}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: Math.max(insets.bottom, 12), 
+            paddingTop: Math.max(insets.top, 12),
+          }
+        ]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         keyboardShouldPersistTaps="handled"
@@ -173,14 +172,13 @@ export default function Login() {
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ delay: 100 }}
-          className="items-center"
-          style={{ justifyContent: 'center', marginBottom: isLogin ? 16 : 8 }}
+          style={[styles.headerContainer, { marginBottom: isLogin ? 16 : 8 }]}
         >
-          <View style={{ marginBottom: 4, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={styles.logoWrapper}>
             <CafePassLogo size={isLogin ? Math.min(height * 0.12, 84) : Math.min(height * 0.075, 54)} />
           </View>
-          <Text className="font-serif text-white tracking-tight" style={{ fontSize: isLogin ? 28 : 22 }}>CafePass</Text>
-          <Text className="text-white/70 font-sans tracking-wide" style={{ fontSize: isLogin ? 13 : 11, marginTop: 2 }}>
+          <Text style={[styles.appName, { fontSize: isLogin ? 28 : 22 }]}>CafePass</Text>
+          <Text style={[styles.appSubtitle, { fontSize: isLogin ? 13 : 11 }]}>
             {isLogin ? 'Your digital coffee companion' : 'Create your digital pass'}
           </Text>
         </MotiView>
@@ -189,8 +187,7 @@ export default function Login() {
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 200 }}
-          className="bg-black/40 shadow-lg border border-white/10 rounded-[28px]"
-          style={{ width: '92%', maxWidth: 400, paddingHorizontal: 18, paddingVertical: isLogin ? 22 : 14 }}
+          style={[styles.card, { paddingVertical: isLogin ? 22 : 14 }]}
         >
           <AnimatePresence>
             {serverError ? (
@@ -198,10 +195,10 @@ export default function Login() {
                 from={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-red-50 p-3 rounded-2xl mb-4 flex-row items-center border border-red-100"
+                style={styles.errorAlert}
               >
                 <AlertCircle size={18} color="#DC2626" />
-                <Text className="text-red-700 ml-2 font-sans flex-1 text-xs">{serverError}</Text>
+                <Text style={styles.errorAlertText}>{serverError}</Text>
               </MotiView>
             ) : null}
           </AnimatePresence>
@@ -209,36 +206,42 @@ export default function Login() {
           {!isLogin && (
             <>
               <View style={{ marginBottom: isLogin ? 12 : 8 }}>
-                <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Full Name</Text>
+                <Text style={styles.inputLabel}>Full Name</Text>
                 <TextInput 
                   placeholder="John Doe"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   value={fullName}
                   onChangeText={(val) => { setFullName(val); if (errors.fullName) setErrors({...errors, fullName: ''}) }}
-                  className={`bg-zinc-800/80 px-3.5 rounded-xl text-white font-sans border ${errors.fullName ? 'border-red-500' : 'border-primary/20'}`}
-                  style={{ height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 }}
+                  style={[
+                    styles.input,
+                    { height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 },
+                    errors.fullName ? styles.inputErrorBorder : styles.inputNormalBorder
+                  ]}
                 />
-                {errors.fullName && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.fullName}</Text>}
+                {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
               </View>
 
               <View style={{ marginBottom: isLogin ? 12 : 8 }}>
-                <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Phone Number</Text>
+                <Text style={styles.inputLabel}>Phone Number</Text>
                 <TextInput 
                   placeholder="+1 234 567 8900"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={(val) => { setPhone(val); if (errors.phone) setErrors({...errors, phone: ''}) }}
-                  className={`bg-zinc-800/80 px-3.5 rounded-xl text-white font-sans border ${errors.phone ? 'border-red-500' : 'border-primary/20'}`}
-                  style={{ height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 }}
+                  style={[
+                    styles.input,
+                    { height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 },
+                    errors.phone ? styles.inputErrorBorder : styles.inputNormalBorder
+                  ]}
                 />
-                {errors.phone && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.phone}</Text>}
+                {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
               </View>
             </>
           )}
 
           <View style={{ marginBottom: isLogin ? 12 : 8 }}>
-            <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Email</Text>
+            <Text style={styles.inputLabel}>Email</Text>
             <TextInput 
               placeholder="hello@coffeelover.com"
               placeholderTextColor="rgba(255, 255, 255, 0.3)"
@@ -246,17 +249,23 @@ export default function Login() {
               autoCapitalize="none"
               value={email}
               onChangeText={(val) => { setEmail(val); if (errors.email) setErrors({...errors, email: ''}) }}
-              className={`bg-zinc-800/80 px-3.5 rounded-xl text-white font-sans border ${errors.email ? 'border-red-500' : 'border-primary/20'}`}
-              style={{ height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 }}
+              style={[
+                styles.input,
+                { height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 },
+                errors.email ? styles.inputErrorBorder : styles.inputNormalBorder
+              ]}
             />
-            {errors.email && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.email}</Text>}
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
           </View>
 
           <View style={{ marginBottom: isLogin ? 16 : 10 }}>
-            <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Password</Text>
+            <Text style={styles.inputLabel}>Password</Text>
             <View 
-              className={`bg-zinc-800/80 rounded-xl border ${errors.password ? 'border-red-500' : 'border-primary/20'} flex-row items-center pr-3.5`} 
-              style={{ height: isLogin ? 48 : 40 }}
+              style={[
+                styles.passwordContainer,
+                { height: isLogin ? 48 : 40 },
+                errors.password ? styles.inputErrorBorder : styles.inputNormalBorder
+              ]}
             >
               <TextInput 
                 placeholder="••••••••"
@@ -264,23 +273,25 @@ export default function Login() {
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
-                className="flex-1 px-3.5 text-white font-sans h-full"
-                style={{ fontSize: isLogin ? 15 : 13 }}
+                style={[styles.passwordInput, { fontSize: isLogin ? 15 : 13 }]}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 {showPassword ? <EyeOff size={18} color="#C67C4E" /> : <Eye size={18} color="#C67C4E" />}
               </TouchableOpacity>
             </View>
-            {errors.password && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.password}</Text>}
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           </View>
 
           <TouchableOpacity 
             disabled={loading}
-            className={`bg-primary border border-primary/50 px-6 rounded-xl flex-row items-center justify-center shadow-lg shadow-primary/20 ${loading ? 'opacity-70' : ''}`}
-            style={{ height: isLogin ? 48 : 42, marginTop: 4 }}
+            style={[
+              styles.primaryButton,
+              { height: isLogin ? 48 : 42, marginTop: 4 },
+              loading && styles.buttonDisabled
+            ]}
             onPress={handleAuth}
           >
-            <Text className="text-white font-bold mr-2 tracking-wide" style={{ fontSize: isLogin ? 15 : 14 }}>
+            <Text style={[styles.primaryButtonText, { fontSize: isLogin ? 15 : 14 }]}>
               {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Text>
             {!loading && <ArrowRight size={18} color="#FFFFFF" />}
@@ -291,12 +302,12 @@ export default function Login() {
           from={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 300 }}
-          className="items-center py-3"
+          style={styles.footer}
         >
-          <TouchableOpacity onPress={resetForm} className="py-1 px-3">
-            <Text className="text-white/70 font-sans text-xs">
+          <TouchableOpacity onPress={resetForm} style={styles.switchButton}>
+            <Text style={styles.switchText}>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <Text className="text-primary font-bold">{isLogin ? "Sign Up" : "Log In"}</Text>
+              <Text style={styles.switchHighlight}>{isLogin ? "Sign Up" : "Log In"}</Text>
             </Text>
           </TouchableOpacity>
         </MotiView>
@@ -304,3 +315,146 @@ export default function Login() {
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoWrapper: {
+    marginBottom: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appName: {
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  appSubtitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  card: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    width: '92%',
+    maxWidth: 400,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  errorAlert: {
+    backgroundColor: '#FEF2F2',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
+  errorAlertText: {
+    color: '#B91C1C',
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 12,
+  },
+  inputLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: 'bold',
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: 10,
+    marginBottom: 2,
+  },
+  input: {
+    backgroundColor: 'rgba(39, 39, 42, 0.8)',
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    color: '#FFFFFF',
+    borderWidth: 1,
+  },
+  inputNormalBorder: {
+    borderColor: 'rgba(198, 124, 78, 0.2)',
+  },
+  inputErrorBorder: {
+    borderColor: '#EF4444',
+  },
+  passwordContainer: {
+    backgroundColor: 'rgba(39, 39, 42, 0.8)',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 14,
+    borderWidth: 1,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 14,
+    color: '#FFFFFF',
+    height: '100%',
+  },
+  errorText: {
+    color: '#F87171',
+    fontSize: 12,
+    marginTop: 2,
+    marginLeft: 4,
+  },
+  primaryButton: {
+    backgroundColor: '#C67C4E',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(198, 124, 78, 0.5)',
+    shadowColor: '#C67C4E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginRight: 8,
+    letterSpacing: 0.5,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  switchButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+  },
+  switchText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+  },
+  switchHighlight: {
+    color: '#C67C4E',
+    fontWeight: 'bold',
+  },
+});

@@ -1,7 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
-import '../global.css';
 
 function RootLayoutNav() {
   const { session, initialized } = useAuth();

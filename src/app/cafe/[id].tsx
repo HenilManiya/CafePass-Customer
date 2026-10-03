@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator, ScrollView, Modal, Linking, Animated as RNAnimated } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator, ScrollView, Modal, Linking, Animated as RNAnimated, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from '@/components/LinearGradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/authStore';
@@ -40,26 +40,26 @@ function ConfettiBurst({ visible }: { visible: boolean }) {
   if (!visible) return null;
   const screenHeight = Dimensions.get('window').height;
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
+    <View style={styles.confettiContainer}>
       {anims.map((anim, i) => (
         <RNAnimated.View
           key={i}
-          style={{
-            position: 'absolute',
-            transform: [
-              { translateX: props[i].x },
-              { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-10, screenHeight + 20] }) },
-            ],
-            width: 8, height: 8, borderRadius: 4,
-            backgroundColor: props[i].color,
-            opacity: anim.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
-          }}
+          style={[
+            styles.confettiParticle,
+            {
+              transform: [
+                { translateX: props[i].x },
+                { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-10, screenHeight + 20] }) },
+              ],
+              backgroundColor: props[i].color,
+              opacity: anim.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
+            }
+          ]}
         />
       ))}
     </View>
   );
 }
-
 
 export default function CafeCardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -92,10 +92,10 @@ export default function CafeCardScreen() {
     if (slotEl && containerEl) {
       slotEl.measureLayout(
         containerEl,
-        (left, top, width, height) => {
+        (left, top, slotWidth, height) => {
           setSlotCoordinates((prev) => ({
             ...prev,
-            [index]: { x: left + width / 2, y: top + height / 2 },
+            [index]: { x: left + slotWidth / 2, y: top + height / 2 },
           }));
         },
         () => { }
@@ -115,7 +115,6 @@ export default function CafeCardScreen() {
   const fetchCardDetails = useCallback(async () => {
     if (!session || !id) return;
 
-    // Run active card, cafe details, and rewards count queries in parallel
     const [cardRes, cafeRes, rewardsRes] = await Promise.all([
       supabase
         .from('digital_cards')
@@ -139,7 +138,6 @@ export default function CafeCardScreen() {
 
     if (cardRes.data) {
       setCard((prev: any) => {
-        // If the screen is proudly displaying a completed card, don't overwrite it with a blank one!
         const max = cafeRef.current?.max_punches || prev?.cafes?.max_punches || 10;
         if (prev && prev.punch_count >= max && cardRes.data.punch_count === 0) {
           return prev;
@@ -188,12 +186,10 @@ export default function CafeCardScreen() {
     }
   }, [id, session]);
 
-  // Initial fetch: only load card details, do NOT pre-generate QR
   useEffect(() => {
     fetchCardDetails();
   }, [fetchCardDetails]);
 
-  // Countdown timer: counts down while modal is visible, no continuous generation
   useEffect(() => {
     if (!qrToken || !isQRModalVisible) return;
 
@@ -212,7 +208,7 @@ export default function CafeCardScreen() {
 
   const handleOpenQR = () => {
     setIsQRModalVisible(true);
-    fetchQRToken(false); // Only generate QR when user clicks Show QR button
+    fetchQRToken(false);
   };
 
   const userId = session?.user?.id;
@@ -221,7 +217,6 @@ export default function CafeCardScreen() {
     fetchCardDetailsRef.current = fetchCardDetails;
   }, [fetchCardDetails]);
 
-  // Listen for real-time punch updates from the Cafe!
   useEffect(() => {
     if (!userId || !id) return;
 
@@ -253,16 +248,16 @@ export default function CafeCardScreen() {
               animatingRef.current = true;
               setAnimatingPunch({ active: true, targetPunches: newPunches });
               setSecondsLeft(15);
-              setIsQRModalVisible(false); // Close modal on successful punch
+              setIsQRModalVisible(false);
             } else if (!newRecord.is_completed && !animatingRef.current) {
               const max = cafeRef.current?.max_punches || 10;
               if (cardRef.current?.punch_count >= max && newPunches === 0) {
-                // Do nothing, let them admire their fully stamped card!
+                // Do nothing
               } else {
                 setCard(newRecord);
                 fetchCardDetailsRef.current();
               }
-              setIsQRModalVisible(false); // Close modal on any valid update
+              setIsQRModalVisible(false);
             }
           }
         }
@@ -301,9 +296,6 @@ export default function CafeCardScreen() {
 
   const handleAnimationComplete = () => {
     animatingRef.current = false;
-
-    // If we just stamped the final punch, keep the completed card on screen 
-    // so the user can bask in its glory! Just fetch the rewards to update the UI badge.
     const maxPunches = cafeDetails?.max_punches || card?.cafes?.max_punches || 10;
     const isCompleted = animatingPunch?.targetPunches && animatingPunch.targetPunches >= maxPunches;
 
@@ -331,12 +323,11 @@ export default function CafeCardScreen() {
   const isExpiringSoon = secondsLeft <= 15 && !isExpired;
 
   return (
-    <View className="flex-1 ">
-      {/* Dynamic Aesthetic Background */}
+    <View style={styles.container}>
       {cafeDetails?.image_url && (
         <Image
           source={{ uri: cafeDetails.image_url }}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
+          style={StyleSheet.absoluteFill}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={200}
@@ -344,39 +335,36 @@ export default function CafeCardScreen() {
       )}
       <LinearGradient
         colors={['rgba(0, 0, 0, 0.4)', 'rgba(0, 0, 0, 0.7)', '#1C0F0A']}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
+        style={StyleSheet.absoluteFill}
       />
 
-      <SafeAreaView className="flex-1">
-        {/* Header */}
-        <View className="px-4 py-4 flex-row items-center relative z-10">
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topHeader}>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-12 h-12 bg-black/30 rounded-full items-center justify-center border border-white/20 backdrop-blur-md"
+            style={styles.backButton}
           >
             <ChevronLeft size={24} color="white" />
           </TouchableOpacity>
-          <View className="absolute inset-x-0 flex-row items-center justify-center pointer-events-none gap-2">
+          <View style={styles.headerTitleContainer} pointerEvents="none">
             <CafePassLogo size={24} />
-            <Text className="font-sans text-sm text-white/80 uppercase tracking-widest font-bold">CafePass</Text>
+            <Text style={styles.headerTitleText}>CafePass</Text>
           </View>
         </View>
 
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <MotiView
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ delay: 200 }}
-            className="w-full items-center"
-            style={{ flexGrow: 1, justifyContent: 'center' }}
+            style={styles.contentWrapper}
           >
-            {/* Cafe Info Header above card */}
             {cafeDetails && (
-              <View className="mb-6 w-full items-center justify-center">
+              <View style={styles.cafeHeaderWrapper}>
                 <CafeHeader
                   variant="large"
                   cafeName={cafeDetails.name}
@@ -386,60 +374,51 @@ export default function CafeCardScreen() {
               </View>
             )}
 
-            {/* Digital Punch Card */}
             {(card || cafeDetails) && (
               <View
                 ref={punchCardContainerRef}
-                className="w-full shadow-lg border border-white/20 mb-8 relative"
-                style={{ borderRadius: 32, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.15)' }}
+                style={styles.punchCardContainer}
               >
-                <View className="p-5 w-full">
-                  <View className="items-center mb-3 border-b border-white/20 pb-2">
-                    <Text className="text-white font-serif text-2xl tracking-widest shadow-sm">PUNCH CARD</Text>
-                    <Text className="text-white/80 text-[10px] uppercase tracking-[0.2em] mt-1 font-bold">Buy {cafeDetails?.max_punches || card?.cafes?.max_punches || 10}, Get 1 Free</Text>
+                <View style={styles.punchCardPadding}>
+                  <View style={styles.punchCardHeader}>
+                    <Text style={styles.punchCardTitle}>PUNCH CARD</Text>
+                    <Text style={styles.punchCardSubtitle}>Buy {cafeDetails?.max_punches || card?.cafes?.max_punches || 10}, Get 1 Free</Text>
                     {rewardsAvailable > 0 && (
-                      <View className="bg-white/20 px-4 py-1.5 rounded-full mt-3 shadow-sm border border-white/10">
-                        <Text className="text-white font-bold text-xs uppercase tracking-widest">🎁 {rewardsAvailable} Reward{rewardsAvailable > 1 ? 's' : ''} Available!</Text>
+                      <View style={styles.rewardsAvailableBadge}>
+                        <Text style={styles.rewardsAvailableText}>🎁 {rewardsAvailable} Reward{rewardsAvailable > 1 ? 's' : ''} Available!</Text>
                       </View>
                     )}
                   </View>
 
-                  <View className="flex-row flex-wrap justify-center px-1">
+                  <View style={styles.slotsGrid}>
                     {Array.from({ length: cafeDetails?.max_punches || card?.cafes?.max_punches || 10 }).map((_, i) => {
                       const isPunched = i < (card?.punch_count || 0);
-                      // Fixed pseudo-random rotations to make the stamps feel hand-pressed
                       const stampRotations = ['-12deg', '8deg', '-5deg', '15deg', '-8deg', '10deg', '-3deg', '14deg', '-15deg', '6deg'];
                       const rotation = stampRotations[i % stampRotations.length];
 
                       return (
-                        <View
-                          key={i}
-                          className="w-[20%] items-center mb-4"
-                        >
+                        <View key={i} style={styles.slotWrapper}>
                           <View
                             ref={(el) => { slotRefs.current[i] = el; }}
                             onLayout={() => measureSlot(i)}
-                            className="rounded-full items-center justify-center border-2 border-dashed border-white/30 bg-white/10 relative"
-                            style={{ width: '80%', aspectRatio: 1 }}
+                            style={styles.slotCircle}
                           >
                             {isPunched && (
                               <MotiView
                                 from={{ scale: 1.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ type: 'spring', damping: 14, delay: i * 150 }}
-                                style={{ transform: [{ rotate: rotation }] }}
-                                className="absolute inset-0 items-center justify-center"
+                                style={[styles.stampAnimContainer, { transform: [{ rotate: rotation }] }]}
                               >
-                                {/* The "Ink Stamp" */}
-                                <View className="w-[110%] h-[110%] rounded-full border-[3px] border-primary items-center justify-center bg-transparent overflow-hidden">
+                                <View style={styles.stampCircle}>
                                   <Coffee size={28} color="#C67C4E" strokeWidth={2.5} />
-                                  <View className="absolute inset-0 bg-primary opacity-[0.15]" />
+                                  <View style={styles.stampBg} />
                                 </View>
                               </MotiView>
                             )}
 
                             {!isPunched && (
-                              <Text className="text-white/50 font-serif text-lg">{i + 1}</Text>
+                              <Text style={styles.slotNumber}>{i + 1}</Text>
                             )}
                           </View>
                         </View>
@@ -447,12 +426,11 @@ export default function CafeCardScreen() {
                     })}
                   </View>
 
-                  <Text className="text-white/80 text-center text-xs font-serif mt-2 italic">
+                  <Text style={styles.moreForFreeText}>
                     {(cafeDetails?.max_punches || card?.cafes?.max_punches || 10) - (card?.punch_count || 0)} more for a free drink!
                   </Text>
                 </View>
 
-                {/* The Animated Barista Character overlay (Now positioned inside the card!) */}
                 {animatingPunch?.active && (
                   <AnimatedBarista
                     targetSlotIndex={animatingPunch.targetPunches - 1}
@@ -466,20 +444,19 @@ export default function CafeCardScreen() {
 
             <TouchableOpacity
               onPress={handleOpenQR}
-              className="mt-6 rounded-full shadow-sm border border-white/20 overflow-hidden relative bg-white/20"
+              style={styles.showQRButton}
             >
-              <View className="py-2 px-5 flex-row items-center justify-center">
+              <View style={styles.showQRInner}>
                 <QrCode size={18} color="white" />
-                <Text className="text-white font-sans font-semibold text-sm ml-2">Show QR to Scan</Text>
+                <Text style={styles.showQRText}>Show QR to Scan</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Bottom Action Links */}
-            <View className="flex-row flex-wrap justify-center items-center gap-4 mt-10">
+            <View style={styles.actionLinksRow}>
               {cafeDetails?.location && (
                 <TouchableOpacity
                   onPress={() => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(cafeDetails.location)}`)}
-                  className="w-14 h-14 rounded-full bg-black/40 border-2 border-white/20 shadow-lg items-center justify-center backdrop-blur-md"
+                  style={styles.actionLinkBtn}
                 >
                   <MapPin size={24} color="#C67C4E" />
                 </TouchableOpacity>
@@ -487,7 +464,7 @@ export default function CafeCardScreen() {
               {cafeDetails?.instagram_url && (
                 <TouchableOpacity
                   onPress={() => Linking.openURL(cafeDetails.instagram_url)}
-                  className="w-14 h-14 rounded-full bg-black/40 border-2 border-white/20 shadow-lg items-center justify-center backdrop-blur-md"
+                  style={styles.actionLinkBtn}
                 >
                   <Camera size={24} color="#E1306C" />
                 </TouchableOpacity>
@@ -495,7 +472,7 @@ export default function CafeCardScreen() {
               {cafeDetails?.mobile_number && (
                 <TouchableOpacity
                   onPress={() => Linking.openURL(`tel:${cafeDetails.mobile_number}`)}
-                  className="w-14 h-14 rounded-full bg-black/40 border-2 border-white/20 shadow-lg items-center justify-center backdrop-blur-md"
+                  style={styles.actionLinkBtn}
                 >
                   <Phone size={24} color="#34D399" />
                 </TouchableOpacity>
@@ -504,19 +481,14 @@ export default function CafeCardScreen() {
           </MotiView>
         </ScrollView>
 
-        {/* QR Code Bottom Sheet */}
         <AnimatePresence>
           {isQRModalVisible && (
-            <View
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, elevation: 100 }}
-              pointerEvents="box-none"
-            >
-              {/* Dark backdrop overlay */}
+            <View style={styles.modalOverlay} pointerEvents="box-none">
               <MotiView
                 from={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/60"
+                style={styles.modalBackdrop}
               >
                 <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setIsQRModalVisible(false)} />
               </MotiView>
@@ -526,87 +498,81 @@ export default function CafeCardScreen() {
                 animate={{ translateY: 0 }}
                 exit={{ translateY: 600 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="absolute bottom-0 left-0 right-0 w-full"
+                style={styles.modalSheet}
                 pointerEvents="box-none"
               >
-                <View className="w-full shadow-[0_-20px_50px_rgba(0,0,0,0.6)] overflow-hidden rounded-t-[40px] border-t border-white/10" style={{ borderTopLeftRadius: 40, borderTopRightRadius: 40 }}>
-                  <View className="w-full" style={{ backgroundColor: 'rgba(20,10,5,0.85)' }}>
-                    <View className="w-full px-8 pt-8 pb-12 items-center">
-
-                      <View className="w-full flex-row justify-between items-center mb-6">
-                        <Text className="font-serif text-white text-2xl tracking-wide font-bold">CafePass QR</Text>
-                        <TouchableOpacity onPress={() => setIsQRModalVisible(false)} className="p-2.5 bg-white/10 rounded-full">
-                          <X size={20} color="white" />
-                        </TouchableOpacity>
-                      </View>
-
-                      <Text
-                        className="font-sans text-white/70 text-center mb-8 text-sm"
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        Show this code to the barista for a punch or reward.
-                      </Text>
-
-                      {/* Scannable White QR Container */}
-                      <View className="bg-white p-6 rounded-[28px] items-center justify-center mb-8 shadow-lg self-center border-[6px] border-white/10">
-                        {loading ? (
-                          <View className="items-center justify-center w-48 h-48">
-                            <ActivityIndicator size="large" color="#000000" />
-                            <Text className="text-black/60 mt-4 font-sans text-sm">Generating...</Text>
-                          </View>
-                        ) : error ? (
-                          <View className="items-center justify-center px-4 w-48 h-48">
-                            <Text className="text-red-500 text-center font-sans text-sm mb-4">{error}</Text>
-                            <TouchableOpacity
-                              onPress={() => fetchQRToken(true)}
-                              className="bg-black px-6 py-3.5 rounded-[20px] flex-row items-center"
-                            >
-                              <RefreshCw size={16} color="white" />
-                              <Text className="text-white font-bold ml-2">Retry</Text>
-                            </TouchableOpacity>
-                          </View>
-                        ) : qrToken ? (
-                          <AnimatePresence exitBeforeEnter>
-                            <MotiView
-                              key={qrToken}
-                              from={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0 }}
-                            >
-                              <QRCode
-                                value={qrToken}
-                                size={width * 0.45}
-                                color="#000000"
-                                backgroundColor="white"
-                              />
-                            </MotiView>
-                          </AnimatePresence>
-                        ) : null}
-                      </View>
-
-                      {/* Timer */}
-                      {!loading && !error && qrToken && (
-                        <View className="flex-col items-center gap-3">
-                          <View className="flex-row items-center bg-white/10 px-5 py-3 rounded-full shadow-sm self-center">
-                            <Clock size={16} color={isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : 'white'} />
-                            <Text style={{ color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : 'white' }} className="font-bold ml-2.5 font-sans text-[15px]">
-                              {isExpired ? 'QR Expired' : `Expires in ${minutes}:${seconds.toString().padStart(2, '0')}`}
-                            </Text>
-                          </View>
-                          {isExpired && (
-                            <TouchableOpacity
-                              onPress={() => fetchQRToken(true)}
-                              className="bg-primary px-5 py-2.5 rounded-full flex-row items-center shadow-md"
-                            >
-                              <RefreshCw size={14} color="white" />
-                              <Text className="text-white font-sans font-bold text-xs ml-2">Generate New QR</Text>
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      )}
-
+                <View style={styles.modalInner}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeaderRow}>
+                      <Text style={styles.modalTitle}>CafePass QR</Text>
+                      <TouchableOpacity onPress={() => setIsQRModalVisible(false)} style={styles.modalCloseBtn}>
+                        <X size={20} color="white" />
+                      </TouchableOpacity>
                     </View>
+
+                    <Text
+                      style={styles.modalDesc}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                    >
+                      Show this code to the barista for a punch or reward.
+                    </Text>
+
+                    <View style={styles.qrContainer}>
+                      {loading ? (
+                        <View style={styles.qrLoading}>
+                          <ActivityIndicator size="large" color="#000000" />
+                          <Text style={styles.qrLoadingText}>Generating...</Text>
+                        </View>
+                      ) : error ? (
+                        <View style={styles.qrError}>
+                          <Text style={styles.qrErrorText}>{error}</Text>
+                          <TouchableOpacity
+                            onPress={() => fetchQRToken(true)}
+                            style={styles.qrRetryBtn}
+                          >
+                            <RefreshCw size={16} color="white" />
+                            <Text style={styles.qrRetryText}>Retry</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : qrToken ? (
+                        <AnimatePresence exitBeforeEnter>
+                          <MotiView
+                            key={qrToken}
+                            from={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            <QRCode
+                              value={qrToken}
+                              size={width * 0.45}
+                              color="#000000"
+                              backgroundColor="white"
+                            />
+                          </MotiView>
+                        </AnimatePresence>
+                      ) : null}
+                    </View>
+
+                    {!loading && !error && qrToken && (
+                      <View style={styles.timerContainer}>
+                        <View style={styles.timerRow}>
+                          <Clock size={16} color={isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : 'white'} />
+                          <Text style={[styles.timerText, { color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : 'white' }]}>
+                            {isExpired ? 'QR Expired' : `Expires in ${minutes}:${seconds.toString().padStart(2, '0')}`}
+                          </Text>
+                        </View>
+                        {isExpired && (
+                          <TouchableOpacity
+                            onPress={() => fetchQRToken(true)}
+                            style={styles.generateNewBtn}
+                          >
+                            <RefreshCw size={14} color="white" />
+                            <Text style={styles.generateNewText}>Generate New QR</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
                   </View>
                 </View>
               </MotiView>
@@ -618,3 +584,361 @@ export default function CafeCardScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  confettiContainer: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    pointerEvents: 'none',
+  },
+  confettiParticle: {
+    position: 'absolute',
+    width: 8, height: 8, borderRadius: 4,
+  },
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  topHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+    zIndex: 10,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  headerTitleContainer: {
+    position: 'absolute',
+    left: 0, right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  headerTitleText: {
+    fontFamily: Platform.select({ ios: 'ui-sans-serif', default: 'sans-serif' }),
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  contentWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  cafeHeaderWrapper: {
+    marginBottom: 24,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  punchCardContainer: {
+    width: '100%',
+    borderRadius: 32,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginBottom: 32,
+  },
+  punchCardPadding: {
+    padding: 20,
+    width: '100%',
+  },
+  punchCardHeader: {
+    alignItems: 'center',
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
+    paddingBottom: 8,
+  },
+  punchCardTitle: {
+    color: '#FFFFFF',
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    fontSize: 24,
+    letterSpacing: 2,
+  },
+  punchCardSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginTop: 4,
+    fontWeight: 'bold',
+  },
+  rewardsAvailableBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  rewardsAvailableText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+  },
+  slotsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  slotWrapper: {
+    width: '20%',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  slotCircle: {
+    width: '80%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  stampAnimContainer: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampCircle: {
+    width: '110%',
+    height: '110%',
+    borderRadius: 999,
+    borderWidth: 3,
+    borderColor: '#C67C4E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  stampBg: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#C67C4E',
+    opacity: 0.15,
+  },
+  slotNumber: {
+    color: 'rgba(255,255,255,0.5)',
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    fontSize: 18,
+  },
+  moreForFreeText: {
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    fontSize: 12,
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  showQRButton: {
+    marginTop: 24,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  showQRInner: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showQRText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  actionLinksRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 40,
+  },
+  actionLinkBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 100,
+    elevation: 100,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  modalSheet: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    width: '100%',
+  },
+  modalInner: {
+    width: '100%',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: 'rgba(20,10,5,0.85)',
+    paddingHorizontal: 32,
+    paddingTop: 32,
+    paddingBottom: 48,
+    alignItems: 'center',
+  },
+  modalHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    color: '#FFFFFF',
+    fontSize: 24,
+    letterSpacing: 1,
+    fontWeight: 'bold',
+  },
+  modalCloseBtn: {
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 999,
+  },
+  modalDesc: {
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+    marginBottom: 32,
+    fontSize: 14,
+  },
+  qrContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+    borderWidth: 6,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignSelf: 'center',
+  },
+  qrLoading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 192,
+    height: 192,
+  },
+  qrLoadingText: {
+    color: 'rgba(0,0,0,0.6)',
+    marginTop: 16,
+    fontSize: 14,
+  },
+  qrError: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    width: 192,
+    height: 192,
+  },
+  qrErrorText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  qrRetryBtn: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  qrRetryText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  timerContainer: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  timerText: {
+    fontWeight: 'bold',
+    marginLeft: 10,
+    fontSize: 15,
+  },
+  generateNewBtn: {
+    backgroundColor: '#C67C4E',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  generateNewText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginLeft: 8,
+  },
+});

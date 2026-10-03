@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Dimensions, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,7 +7,7 @@ import { supabase } from '@/shared';
 import { useAuthStore } from '@/store/authStore';
 import { QrCode, LogOut, Coffee } from '@/components/Icon';
 import { MotiView } from 'moti';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from '@/components/LinearGradient';
 import { CafeHeader } from '@/components/CafeHeader';
 import { CafePassLogo } from '@/components/CafePassLogo';
 
@@ -33,13 +33,11 @@ export default function Home() {
 
   useEffect(() => {
     fetchVisitedCafes();
-  }, []);
+  }, [session?.user?.id]);
 
   const fetchVisitedCafes = async () => {
-    if (!session?.user) {
-      console.warn('[home] fetchVisitedCafes: no session, skipping');
-      return;
-    }
+    if (!session?.user) return;
+    
     console.log('[home] Fetching digital cards for user:', session.user.id);
 
     const { data, error } = await supabase
@@ -68,25 +66,25 @@ export default function Home() {
         from={{ opacity: 0, translateY: 30 }}
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ delay: index * 100 }}
-        className="mb-6 shadow-2xl"
+        style={styles.cardContainer}
       >
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => router.push(`/cafe/${item.cafe_id}`)}
-          className="rounded-[32px] overflow-hidden border border-zinc-800 bg-zinc-900 relative shadow-lg"
+          style={styles.cardWrapper}
         >
           {/* Cafe Image Background */}
           <Image
             source={{ uri: item.cafes?.image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80' }}
-            className="absolute inset-0 w-full h-full"
+            style={styles.cardImage}
             contentFit="cover"
             cachePolicy="memory-disk"
             transition={150}
           />
           
-          <View className="w-full" style={{ backgroundColor: 'rgba(15,8,4,0.72)' }}>
-            <View className="p-5">
-              <View className="flex-row justify-between items-start mb-5">
+          <View style={styles.cardOverlay}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
                 <CafeHeader 
                   variant="small" 
                   cafeName={item.cafes?.name} 
@@ -94,23 +92,23 @@ export default function Home() {
                   logoUrl={item.cafes?.logo_url || undefined} 
                 />
 
-                <View className="bg-white/20 px-3.5 py-1.5 rounded-full border border-white/10 items-center justify-center shrink-0">
-                  <Text className="text-white font-bold text-base font-serif">{punches}<Text className="text-white/70 text-xs">/{required}</Text></Text>
+                <View style={styles.punchesBadge}>
+                  <Text style={styles.punchesText}>{punches}<Text style={styles.punchesRequired}>/{required}</Text></Text>
                 </View>
               </View>
 
               {rewards > 0 && (
-                <View className="absolute top-5 right-20 bg-white/20 px-3 py-1 rounded-full shadow-lg border border-white/10">
-                  <Text className="text-white font-bold text-xs">🎁 {rewards}</Text>
+                <View style={styles.rewardsBadge}>
+                  <Text style={styles.rewardsText}>🎁 {rewards}</Text>
                 </View>
               )}
 
               {/* Progress Bar Area */}
-              <View className="mt-1">
-                <View className="flex-row justify-between items-center mb-2 gap-2">
-                  <Text className="text-white/70 font-bold text-[10px] uppercase tracking-[0.1em] shrink-0">Rewards Progress</Text>
+              <View style={styles.progressContainer}>
+                <View style={styles.progressHeader}>
+                  <Text style={styles.progressLabel}>Rewards Progress</Text>
                   <Text 
-                    className="text-primary font-bold text-xs italic flex-1 text-right"
+                    style={styles.progressStatusText}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -118,10 +116,9 @@ export default function Home() {
                   </Text>
                 </View>
                 
-                <View className="h-2.5 w-full bg-white/10 rounded-full overflow-hidden border border-black/50">
+                <View style={styles.progressBarTrack}>
                   <MotiView
-                    className="h-full bg-primary rounded-full shadow-lg shadow-primary/40"
-                    style={{ width: `${progress}%` }}
+                    style={[styles.progressBarFill, { width: `${progress}%` }]}
                     from={{ translateX: -300 }}
                     animate={{ translateX: 0 }}
                     transition={{ type: 'spring', damping: 14, delay: index * 100 + 300 }}
@@ -136,25 +133,25 @@ export default function Home() {
   };
 
   return (
-    <View className="flex-1 bg-black">
+    <View style={styles.container}>
       <LinearGradient 
         colors={['#000000', '#2E1911']} 
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} 
+        style={StyleSheet.absoluteFill} 
       />
-      <SafeAreaView className="flex-1">
+      <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View className="flex-row justify-between items-end px-6 pt-8 pb-6 z-10 shadow-sm border-b border-white/5 bg-black/20">
-          <MotiView from={{ opacity: 0, translateX: -20 }} animate={{ opacity: 1, translateX: 0 }} className="flex-row items-center gap-3">
+        <View style={styles.header}>
+          <MotiView from={{ opacity: 0, translateX: -20 }} animate={{ opacity: 1, translateX: 0 }} style={styles.headerLeft}>
             <CafePassLogo size={42} />
             <View>
-              <Text className="text-primary text-[10px] uppercase tracking-[0.2em] font-bold mb-0.5">
+              <Text style={styles.greetingText}>
                 {greeting}, {profile?.name || profile?.full_name || profile?.first_name || session?.user?.user_metadata?.name || session?.user?.user_metadata?.full_name || 'Coffee Lover'}
               </Text>
-              <Text className="text-2xl font-serif text-white tracking-tight">Your Cards</Text>
+              <Text style={styles.headerTitle}>Your Cards</Text>
             </View>
           </MotiView>
           <MotiView from={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}>
-            <TouchableOpacity onPress={signOut} className="bg-primary/10 p-3 rounded-full shadow-md border border-primary/20">
+            <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
               <LogOut size={16} color="#C67C4E" />
             </TouchableOpacity>
           </MotiView>
@@ -164,7 +161,7 @@ export default function Home() {
         data={cards}
         keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
         renderItem={renderCard}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 140 }}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={onRefresh}
@@ -173,13 +170,13 @@ export default function Home() {
             <MotiView
               from={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mt-20 items-center px-6"
+              style={styles.emptyStateContainer}
             >
-              <View className="mb-4 items-center justify-center">
+              <View style={styles.emptyStateLogoWrapper}>
                 <CafePassLogo size={72} />
               </View>
-              <Text className="text-white text-2xl font-serif mb-3 text-center">No cards yet!</Text>
-              <Text className="text-white/70 text-center text-[15px] font-sans px-4 leading-relaxed">
+              <Text style={styles.emptyStateTitle}>No cards yet!</Text>
+              <Text style={styles.emptyStateDesc}>
                 Visit a participating cafe and scan their QR code to grab your first digital punch card.
               </Text>
             </MotiView>
@@ -188,7 +185,7 @@ export default function Home() {
       />
 
       {/* Floating Action Button */}
-      <View className="absolute bottom-0 left-0 right-0 items-center pointer-events-box-none" style={{ paddingBottom: Math.max(insets.bottom + 16, 32) }} pointerEvents="box-none">
+      <View style={[styles.fabContainer, { paddingBottom: Math.max(insets.bottom + 16, 32) }]} pointerEvents="box-none">
         <MotiView
           from={{ translateY: 100, opacity: 0 }}
           animate={{ translateY: 0, opacity: 1 }}
@@ -197,20 +194,20 @@ export default function Home() {
           <TouchableOpacity
             onPress={() => router.push('/scan')}
             activeOpacity={0.8}
-            className="relative"
+            style={styles.fabWrapper}
           >
             {/* Subtle pulse effect */}
             <MotiView
               from={{ opacity: 0.5, scale: 1 }}
               animate={{ opacity: 0, scale: 1.2 }}
               transition={{ loop: true, type: 'timing', duration: 2000 }}
-              className="absolute inset-0 bg-primary/20 rounded-full"
+              style={styles.fabPulse}
             />
             
             {/* Proper High-End FAB */}
-            <View className="bg-primary flex-row items-center justify-center px-6 py-4 rounded-full shadow-xl shadow-primary/30 border border-primary/10">
+            <View style={styles.fabButton}>
               <QrCode color="white" size={20} />
-              <Text className="text-white font-sans font-bold text-[15px] tracking-wide ml-3">Scan QR</Text>
+              <Text style={styles.fabText}>Scan QR</Text>
             </View>
           </TouchableOpacity>
         </MotiView>
@@ -219,3 +216,227 @@ export default function Home() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 24,
+    zIndex: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  greetingText: {
+    color: '#C67C4E',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  signOutButton: {
+    backgroundColor: 'rgba(198, 124, 78, 0.1)',
+    padding: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(198, 124, 78, 0.2)',
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 140,
+  },
+  cardContainer: {
+    marginBottom: 24,
+  },
+  cardWrapper: {
+    borderRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#27272a',
+    backgroundColor: '#18181b',
+  },
+  cardImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  cardOverlay: {
+    width: '100%',
+    backgroundColor: 'rgba(15,8,4,0.72)',
+  },
+  cardContent: {
+    padding: 20,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  punchesBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  punchesText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+  },
+  punchesRequired: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+  },
+  rewardsBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 80,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  rewardsText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  progressContainer: {
+    marginTop: 4,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  progressLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: 'bold',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  progressStatusText: {
+    color: '#C67C4E',
+    fontWeight: 'bold',
+    fontSize: 12,
+    fontStyle: 'italic',
+    flex: 1,
+    textAlign: 'right',
+  },
+  progressBarTrack: {
+    height: 10,
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 999,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.5)',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#C67C4E',
+    borderRadius: 999,
+  },
+  emptyStateContainer: {
+    marginTop: 80,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyStateLogoWrapper: {
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyStateDesc: {
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+    fontSize: 15,
+    paddingHorizontal: 16,
+    lineHeight: 24,
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  fabWrapper: {
+    position: 'relative',
+  },
+  fabPulse: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(198, 124, 78, 0.2)',
+    borderRadius: 999,
+  },
+  fabButton: {
+    backgroundColor: '#C67C4E',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(198, 124, 78, 0.1)',
+    shadowColor: '#C67C4E',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 15,
+    letterSpacing: 0.5,
+    marginLeft: 12,
+  },
+});
