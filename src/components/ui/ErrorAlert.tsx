@@ -28,14 +28,14 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
 
 const styles = StyleSheet.create({
   errorAlert: {
-    backgroundColor: Colors.dark.rgba_127_29_29_0_4,
+    backgroundColor: Colors.dark.errorBackground,
     padding: 12,
     borderRadius: 12,
     marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.dark.rgba_239_68_68_0_3,
+    borderColor: Colors.dark.errorBorder,
   },
   errorAlertText: {
     color: Colors.dark.hex_fecaca,

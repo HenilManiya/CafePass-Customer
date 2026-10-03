@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   cardOverlay: {
     width: '100%',
-    backgroundColor: Colors.dark.rgba_15_8_4_0_72,
+    backgroundColor: Colors.dark.cardOverlay,
   },
   cardContent: {
     padding: 20,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.dark.rgba_0_0_0_0_5,
+    borderColor: Colors.dark.shadowMedium,
   },
   progressBarFill: {
     height: '100%',

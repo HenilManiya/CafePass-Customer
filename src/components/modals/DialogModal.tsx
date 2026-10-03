@@ -196,6 +196,6 @@ const styles = StyleSheet.create({
     color: Colors.dark.dark,
   },
   buttonTextDestructive: {
-    color: '#FFF',
+    color: Colors.dark.text,
   },
 });

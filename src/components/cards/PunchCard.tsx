@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 32,
     overflow: 'hidden',
-    backgroundColor: Colors.dark.rgba_255_255_255_0_15,
+    backgroundColor: Colors.dark.punchSlot,
     borderWidth: 1,
     borderColor: Colors.dark.badge,
     marginBottom: 32,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   punchCardSubtitle: {
-    color: Colors.dark.rgba_255_255_255_0_8,
+    color: Colors.dark.textPrimary,
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   moreForFreeText: {
-    color: Colors.dark.rgba_255_255_255_0_8,
+    color: Colors.dark.textPrimary,
     textAlign: 'center',
     fontSize: 12,
     fontFamily: Typography.serif,

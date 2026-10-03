@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   passwordContainer: {
-    backgroundColor: Colors.dark.rgba_39_39_42_0_8,
+    backgroundColor: Colors.dark.inputBackground,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',

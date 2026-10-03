@@ -14,7 +14,7 @@ interface IconProps {
   style?: object;
 }
 
-const defaults = { size: 24, color: Colors.dark.hex_000, strokeWidth: 2 };
+const defaults = { size: 24, color: Colors.dark.background, strokeWidth: 2 };
 
 const icon = (content: (props: Required<Omit<IconProps, 'style'>>) => React.ReactNode) =>
   ({ size = defaults.size, color = defaults.color, strokeWidth = defaults.strokeWidth, style }: IconProps) => (

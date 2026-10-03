@@ -1,32 +1,53 @@
 export const Colors = {
   dark: {
+    // Brand
     primary: '#C67C4E',
     dark: '#160B06',
-    error: '#F87171',
-    muted: 'rgba(255, 255, 255, 0.5)',
-    text: '#FFFFFF',
-    textSecondary: 'rgba(255, 255, 255, 0.7)',
-    modalBackground: 'rgba(20,10,5,0.85)',
-    background: '#000000',
-    cardBackground: '#18181b',
-    cardBorder: '#27272a',
-    border: 'rgba(255, 255, 255, 0.1)',
-    badge: 'rgba(255, 255, 255, 0.2)',
-    placeholder: 'rgba(255, 255, 255, 0.3)',
-    overlay: 'rgba(0, 0, 0, 0.4)',
     primaryLight: 'rgba(198, 124, 78, 0.1)',
     primaryMuted: 'rgba(198, 124, 78, 0.2)',
     primaryBorder: 'rgba(198, 124, 78, 0.5)',
+
+    // Text
+    text: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.7)',
+    textPrimary: 'rgba(255,255,255,0.8)',
+    muted: 'rgba(255, 255, 255, 0.5)',
+
+    // Backgrounds
+    background: '#000000',
+    cardBackground: '#18181b',
+    modalBackground: 'rgba(20,10,5,0.85)',
+    headerBackground: 'rgba(0,0,0,0.2)',
+    inputBackground: 'rgba(39, 39, 42, 0.8)',
+    cardOverlay: 'rgba(15,8,4,0.72)',
+
+    // Borders
+    border: 'rgba(255, 255, 255, 0.1)',
+    borderSubtle: 'rgba(255,255,255,0.05)',
+    cardBorder: '#27272a',
+
+    // Surfaces & Overlays
+    badge: 'rgba(255, 255, 255, 0.2)',
+    placeholder: 'rgba(255, 255, 255, 0.3)',
+    overlay: 'rgba(0, 0, 0, 0.4)',
     transparentDark: 'rgba(0, 0, 0, 0.6)',
-      rgba_0_0_0_0_7: 'rgba(0, 0, 0, 0.7)',
+    gradientDark: 'rgba(0, 0, 0, 0.7)',
+    punchSlot: 'rgba(255,255,255,0.15)',
+
+    // Shadows
+    shadowLight: 'rgba(0,0,0,0.3)',
+    shadowMedium: 'rgba(0,0,0,0.5)',
+
+    // Error
+    error: '#F87171',
+    errorBackground: 'rgba(127, 29, 29, 0.4)',
+    errorBorder: 'rgba(239, 68, 68, 0.3)',
+
+    // Unique hex colors
     hex_1c0f0a: '#1C0F0A',
     hex_e1306c: '#E1306C',
     hex_34d399: '#34D399',
-    rgba_0_0_0_0_3: 'rgba(0,0,0,0.3)',
-    rgba_255_255_255_0_8: 'rgba(255,255,255,0.8)',
     hex_2e1911: '#2E1911',
-    rgba_255_255_255_0_05: 'rgba(255,255,255,0.05)',
-    rgba_0_0_0_0_2: 'rgba(0,0,0,0.2)',
     hex_b71c1c: '#B71C1C',
     hex_121a22: '#121a22',
     hex_1c2833: '#1c2833',
@@ -38,7 +59,6 @@ export const Colors = {
     hex_ebb89a: '#EBB89A',
     hex_ffcdb2: '#FFCDB2',
     hex_795548: '#795548',
-    hex_000: '#000',
     hex_5d4037: '#5D4037',
     hex_4e342e: '#4E342E',
     hex_f0b99b: '#F0B99B',
@@ -52,19 +72,13 @@ export const Colors = {
     hex_d58e52: '#D58E52',
     hex_140a05: '#140A05',
     hex_f2d2a0: '#F2D2A0',
-    rgba_15_8_4_0_72: 'rgba(15,8,4,0.72)',
-    rgba_0_0_0_0_5: 'rgba(0,0,0,0.5)',
-    rgba_255_255_255_0_15: 'rgba(255,255,255,0.15)',
     hex_ef4444: '#EF4444',
     hex_f59e0b: '#F59E0B',
-    rgba_39_39_42_0_8: 'rgba(39, 39, 42, 0.8)',
     hex_ffd700: '#FFD700',
     hex_ff6b6b: '#FF6B6B',
     hex_4ecdc4: '#4ECDC4',
     hex_a29bfe: '#A29BFE',
     hex_fd79a8: '#FD79A8',
-    rgba_127_29_29_0_4: 'rgba(127, 29, 29, 0.4)',
-    rgba_239_68_68_0_3: 'rgba(239, 68, 68, 0.3)',
     hex_fecaca: '#FECACA',
-}
+  }
 };

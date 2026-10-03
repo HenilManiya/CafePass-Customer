@@ -317,7 +317,7 @@ export default function CafeCardScreen() {
         />
       )}
       <LinearGradient
-        colors={[Colors.dark.overlay, Colors.dark.rgba_0_0_0_0_7, Colors.dark.hex_1c0f0a]}
+        colors={[Colors.dark.overlay, Colors.dark.gradientDark, Colors.dark.hex_1c0f0a]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 48,
     height: 48,
-    backgroundColor: Colors.dark.rgba_0_0_0_0_3,
+    backgroundColor: Colors.dark.shadowLight,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   headerTitleText: {
     fontFamily: Typography.sans,
     fontSize: 14,
-    color: Colors.dark.rgba_255_255_255_0_8,
+    color: Colors.dark.textPrimary,
     textTransform: 'uppercase',
     letterSpacing: 2,
     fontWeight: 'bold',

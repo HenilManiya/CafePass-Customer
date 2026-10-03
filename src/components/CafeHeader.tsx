@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   imageContainerLarge: {
     marginRight: 16,
-    shadowColor: Colors.dark.hex_000,
+    shadowColor: Colors.dark.background,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   },
   imageContainerSmall: {
     marginRight: 12,
-    shadowColor: Colors.dark.hex_000,
+    shadowColor: Colors.dark.background,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   titleTextLarge: {
     fontSize: 30,
     fontWeight: 'bold',
-    shadowColor: Colors.dark.hex_000,
+    shadowColor: Colors.dark.background,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

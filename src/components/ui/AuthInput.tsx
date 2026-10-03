@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   input: {
-    backgroundColor: Colors.dark.rgba_39_39_42_0_8,
+    backgroundColor: Colors.dark.inputBackground,
     paddingHorizontal: 14,
     borderRadius: 12,
     color: Colors.dark.text,

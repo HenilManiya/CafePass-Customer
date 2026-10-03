@@ -523,7 +523,7 @@ export function AnimatedBarista({
             {/* Ground shadow */}
             <Animated.View
               style={[
-                { position: 'absolute', left: 38, top: 251, width: 124, height: 16, borderRadius: 8, backgroundColor: Colors.dark.hex_000 },
+                { position: 'absolute', left: 38, top: 251, width: 124, height: 16, borderRadius: 8, backgroundColor: Colors.dark.background },
                 shadowStyle,
               ]}
             />
