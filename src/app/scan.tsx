@@ -7,11 +7,13 @@ import { X } from '@/components/Icon';
 import { CameraPermissionView } from '@/components/scanner/CameraPermissionView';
 import { ScanFrame } from '@/components/scanner/ScanFrame';
 import { Colors } from '@/constants/Colors';
+import { DialogModal, DialogState, defaultDialogState } from '@/components/modals/DialogModal';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const router = useRouter();
+  const [dialog, setDialog] = useState<DialogState>(defaultDialogState);
 
   if (!permission) {
     return <View style={styles.container} />;
@@ -35,13 +37,11 @@ export default function ScanScreen() {
         router.push(`/cafe/${payload.cafe_id}`);
       } else {
         console.warn('[scan] QR missing cafe_id');
-        alert("Invalid Cafe QR code!");
-        setTimeout(() => setScanned(false), 2000);
+        setDialog({ visible: true, type: 'error', title: 'Invalid QR', message: 'Invalid Cafe QR code!', buttons: [{ text: 'OK', onPress: () => setTimeout(() => setScanned(false), 2000) }] });
       }
     } catch (e) {
       console.error('[scan] Failed to parse QR JSON:', e);
-      alert("Invalid QR format");
-      setTimeout(() => setScanned(false), 2000);
+      setDialog({ visible: true, type: 'error', title: 'Error', message: 'Invalid QR format', buttons: [{ text: 'OK', onPress: () => setTimeout(() => setScanned(false), 2000) }] });
     }
   };
 
@@ -69,6 +69,7 @@ export default function ScanScreen() {
         </View>
         <ScanFrame />
       </SafeAreaView>
+      <DialogModal dialog={dialog} setDialog={setDialog} />
     </View>
   );
 }

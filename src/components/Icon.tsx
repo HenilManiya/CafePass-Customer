@@ -139,3 +139,18 @@ export const ExternalLink = icon(() => (
     <Line x1="10" y1="14" x2="21" y2="3" />
   </>
 ));
+
+export const CheckCircle2 = icon(() => (
+  <>
+    <Circle cx="12" cy="12" r="10" />
+    <Path d="m9 12 2 2 4-4" />
+  </>
+));
+
+export const Info = icon(() => (
+  <>
+    <Circle cx="12" cy="12" r="10" />
+    <Line x1="12" y1="16" x2="12" y2="12" />
+    <Line x1="12" y1="8" x2="12.01" y2="8" />
+  </>
+));
