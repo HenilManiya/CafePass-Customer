@@ -305,7 +305,7 @@ export function AnimatedBarista({
   // Stamping alignment:
   // Balanced (+12) so the stamp lands dead center in the punch hole
   const standX = enterDir === 1 ? (slotCenterX - 95.1) : (slotCenterX - 24.9);
-  const targetY = slotCenterY + 12;
+  const targetY = slotCenterY - 20;
 
   const startX = enterDir === 1 ? OFF_LEFT : OFF_RIGHT;
   const endX = exitDir === 1 ? OFF_RIGHT : OFF_LEFT;

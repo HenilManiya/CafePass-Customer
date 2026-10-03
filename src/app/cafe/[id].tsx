@@ -246,9 +246,34 @@ export default function CafeCardScreen() {
                 setCard({ ...newRecord, punch_count: currentPunches });
               }
               animatingRef.current = true;
-              setAnimatingPunch({ active: true, targetPunches: newPunches });
-              setSecondsLeft(15);
-              setIsQRModalVisible(false);
+              
+              const targetIndex = newPunches - 1;
+              const slotEl = slotRefs.current[targetIndex];
+              const containerEl = punchCardContainerRef.current;
+              
+              const startAnimation = () => {
+                setAnimatingPunch({ active: true, targetPunches: newPunches });
+                setSecondsLeft(15);
+                setIsQRModalVisible(false);
+              };
+
+              if (slotEl && containerEl) {
+                slotEl.measureLayout(
+                  containerEl,
+                  (left, top, slotWidth, height) => {
+                    setSlotCoordinates((prev) => ({
+                      ...prev,
+                      [targetIndex]: { x: left + slotWidth / 2, y: top + height / 2 },
+                    }));
+                    startAnimation();
+                  },
+                  () => {
+                    startAnimation();
+                  }
+                );
+              } else {
+                startAnimation();
+              }
             } else if (!newRecord.is_completed && !animatingRef.current) {
               const max = cafeRef.current?.max_punches || 10;
               if (cardRef.current?.punch_count >= max && newPunches === 0) {
