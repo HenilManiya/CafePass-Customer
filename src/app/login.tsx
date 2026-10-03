@@ -3,11 +3,17 @@ import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/context/AuthContext';
 import { supabase } from '@/shared';
-import { Coffee, ArrowRight, AlertCircle, Eye, EyeOff } from '@/components/Icon';
-import { MotiView, AnimatePresence } from 'moti';
+import { Coffee } from '@/components/Icon';
+import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from '@/components/LinearGradient';
 import { CafePassLogo } from '@/components/CafePassLogo';
+import { AuthInput } from '@/components/ui/AuthInput';
+import { AuthPasswordInput } from '@/components/ui/AuthPasswordInput';
+import { AuthButton } from '@/components/ui/AuthButton';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { Colors } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 export default function Login() {
   const router = useRouter();
@@ -153,7 +159,7 @@ export default function Login() {
       style={styles.keyboardContainer}
     >
       <LinearGradient 
-        colors={['#000000', '#2E1911']} 
+        colors={[Colors.dark.background, Colors.dark.hex_2e1911]} 
         style={StyleSheet.absoluteFill} 
       />
       <ScrollView 
@@ -189,113 +195,57 @@ export default function Login() {
           transition={{ delay: 200 }}
           style={[styles.card, { paddingVertical: isLogin ? 22 : 14 }]}
         >
-          <AnimatePresence>
-            {serverError ? (
-              <MotiView 
-                from={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                style={styles.errorAlert}
-              >
-                <AlertCircle size={18} color="#F87171" />
-                <Text style={styles.errorAlertText}>{serverError}</Text>
-              </MotiView>
-            ) : null}
-          </AnimatePresence>
+          <ErrorAlert error={serverError} />
 
           {!isLogin && (
             <>
-              <View style={{ marginBottom: isLogin ? 12 : 8 }}>
-                <Text style={styles.inputLabel}>Full Name</Text>
-                <TextInput 
-                  placeholder="John Doe"
-                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                  value={fullName}
-                  onChangeText={(val) => { setFullName(val); if (errors.fullName) setErrors({...errors, fullName: ''}) }}
-                  style={[
-                    styles.input,
-                    { height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 },
-                    errors.fullName ? styles.inputErrorBorder : styles.inputNormalBorder
-                  ]}
-                />
-                {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
-              </View>
+              <AuthInput
+                label="Full Name"
+                placeholder="John Doe"
+                value={fullName}
+                onChangeText={(val) => { setFullName(val); if (errors.fullName) setErrors({...errors, fullName: ''}) }}
+                error={errors.fullName}
+                isLogin={isLogin}
+              />
 
-              <View style={{ marginBottom: isLogin ? 12 : 8 }}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
-                <TextInput 
-                  placeholder="+1 234 567 8900"
-                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={(val) => { setPhone(val); if (errors.phone) setErrors({...errors, phone: ''}) }}
-                  style={[
-                    styles.input,
-                    { height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 },
-                    errors.phone ? styles.inputErrorBorder : styles.inputNormalBorder
-                  ]}
-                />
-                {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-              </View>
+              <AuthInput
+                label="Phone Number"
+                placeholder="+1 234 567 8900"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={(val) => { setPhone(val); if (errors.phone) setErrors({...errors, phone: ''}) }}
+                error={errors.phone}
+                isLogin={isLogin}
+              />
             </>
           )}
 
-          <View style={{ marginBottom: isLogin ? 12 : 8 }}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <TextInput 
-              placeholder="hello@coffeelover.com"
-              placeholderTextColor="rgba(255, 255, 255, 0.3)"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(val) => { setEmail(val); if (errors.email) setErrors({...errors, email: ''}) }}
-              style={[
-                styles.input,
-                { height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 },
-                errors.email ? styles.inputErrorBorder : styles.inputNormalBorder
-              ]}
-            />
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-          </View>
+          <AuthInput
+            label="Email"
+            placeholder="hello@coffeelover.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={(val) => { setEmail(val); if (errors.email) setErrors({...errors, email: ''}) }}
+            error={errors.email}
+            isLogin={isLogin}
+          />
 
-          <View style={{ marginBottom: isLogin ? 16 : 10 }}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View 
-              style={[
-                styles.passwordContainer,
-                { height: isLogin ? 48 : 40 },
-                errors.password ? styles.inputErrorBorder : styles.inputNormalBorder
-              ]}
-            >
-              <TextInput 
-                placeholder="••••••••"
-                placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
-                style={[styles.passwordInput, { fontSize: isLogin ? 15 : 13 }]}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                {showPassword ? <EyeOff size={18} color="#C67C4E" /> : <Eye size={18} color="#C67C4E" />}
-              </TouchableOpacity>
-            </View>
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-          </View>
+          <AuthPasswordInput
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
+            error={errors.password}
+            isLogin={isLogin}
+          />
 
-          <TouchableOpacity 
-            disabled={loading}
-            style={[
-              styles.primaryButton,
-              { height: isLogin ? 48 : 42, marginTop: 4 },
-              loading && styles.buttonDisabled
-            ]}
+          <AuthButton
+            title={loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+            loading={loading}
+            isLogin={isLogin}
             onPress={handleAuth}
-          >
-            <Text style={[styles.primaryButtonText, { fontSize: isLogin ? 15 : 14 }]}>
-              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
-            </Text>
-            {!loading && <ArrowRight size={18} color="#FFFFFF" />}
-          </TouchableOpacity>
+          />
         </MotiView>
 
         <MotiView 
@@ -319,7 +269,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.dark.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -337,109 +287,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   appName: {
-    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
-    color: '#FFFFFF',
+    fontFamily: Typography.serif,
+    color: Colors.dark.text,
     letterSpacing: -0.5,
   },
   appSubtitle: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: Colors.dark.textSecondary,
     letterSpacing: 0.5,
     marginTop: 2,
   },
   card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: Colors.dark.overlay,
     borderRadius: 28,
     paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: Colors.dark.border,
     width: '92%',
     maxWidth: 400,
-    shadowColor: '#000000',
+    shadowColor: Colors.dark.background,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 8,
-  },
-  errorAlert: {
-    backgroundColor: 'rgba(127, 29, 29, 0.4)',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  errorAlertText: {
-    color: '#FECACA',
-    marginLeft: 8,
-    flex: 1,
-    fontSize: 13,
-  },
-  inputLabel: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: 'bold',
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontSize: 10,
-    marginBottom: 2,
-  },
-  input: {
-    backgroundColor: 'rgba(39, 39, 42, 0.8)',
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    color: '#FFFFFF',
-    borderWidth: 1,
-  },
-  inputNormalBorder: {
-    borderColor: 'rgba(198, 124, 78, 0.2)',
-  },
-  inputErrorBorder: {
-    borderColor: '#EF4444',
-  },
-  passwordContainer: {
-    backgroundColor: 'rgba(39, 39, 42, 0.8)',
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 14,
-    borderWidth: 1,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 14,
-    color: '#FFFFFF',
-    height: '100%',
-  },
-  errorText: {
-    color: '#F87171',
-    fontSize: 12,
-    marginTop: 2,
-    marginLeft: 4,
-  },
-  primaryButton: {
-    backgroundColor: '#C67C4E',
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(198, 124, 78, 0.5)',
-    shadowColor: '#C67C4E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginRight: 8,
-    letterSpacing: 0.5,
   },
   footer: {
     alignItems: 'center',
@@ -450,11 +319,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   switchText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: Colors.dark.textSecondary,
     fontSize: 12,
   },
   switchHighlight: {
-    color: '#C67C4E',
+    color: Colors.dark.primary,
     fontWeight: 'bold',
   },
 });

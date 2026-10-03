@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { Colors } from '@/constants/Colors';
 
 const { width } = Dimensions.get('window');
 
@@ -178,7 +179,7 @@ function Drop({ ring, ang, dist }: { ring: AV; ang: number; dist: number }) {
           width: 5,
           height: 5,
           borderRadius: 2.5,
-          backgroundColor: '#B71C1C',
+          backgroundColor: Colors.dark.hex_b71c1c,
         },
         style,
       ]}
@@ -192,8 +193,8 @@ function Drop({ ring, ang, dist }: { ring: AV; ang: number; dist: number }) {
 /* ------------------------------------------------------------------ */
 
 function Leg({ thigh, knee, foot, far }: { thigh: AV; knee: AV; foot: AV; far?: boolean }) {
-  const pants = far ? '#121a22' : '#1c2833';
-  const shoe = far ? '#2a1a16' : '#3E2723';
+  const pants = far ? Colors.dark.hex_121a22 : Colors.dark.hex_1c2833;
+  const shoe = far ? Colors.dark.hex_2a1a16 : Colors.dark.hex_3e2723;
   return (
     <Pivot w={28} h={52} left={86} top={152} px={14} py={8} angle={thigh}>
       <Svg width={28} height={52} viewBox="0 0 28 52">
@@ -224,9 +225,9 @@ function Arm({
   stampAngle?: AV; // when given, this hand holds the stamp (kept pointing down)
   far?: boolean;
 }) {
-  const sleeve = far ? '#EDE6E0' : '#FFFFFF';
-  const sleeveLine = far ? '#D5CAC2' : '#E3D9D2';
-  const skin = far ? '#EBB89A' : '#FFCDB2';
+  const sleeve = far ? Colors.dark.hex_ede6e0 : Colors.dark.text;
+  const sleeveLine = far ? Colors.dark.hex_d5cac2 : Colors.dark.hex_e3d9d2;
+  const skin = far ? Colors.dark.hex_ebb89a : Colors.dark.hex_ffcdb2;
   return (
     <Pivot w={30} h={56} left={85} top={80} px={15} py={10} angle={shoulder}>
       <Svg width={30} height={56} viewBox="0 0 30 56">
@@ -240,9 +241,9 @@ function Arm({
         {stampAngle && (
           <Pivot w={30} h={46} left={0} top={30} px={15} py={8} angle={stampAngle}>
             <Svg width={30} height={46} viewBox="0 0 30 46">
-              <Rect x={12} y={12} width={6} height={20} rx={2} fill="#3E2723" />
-              <Rect x={3} y={30} width={24} height={11} rx={3} fill="#795548" />
-              <Rect x={5} y={40} width={20} height={4} rx={2} fill="#B71C1C" />
+              <Rect x={12} y={12} width={6} height={20} rx={2} fill={Colors.dark.hex_3e2723} />
+              <Rect x={3} y={30} width={24} height={11} rx={3} fill={Colors.dark.hex_795548} />
+              <Rect x={5} y={40} width={20} height={4} rx={2} fill={Colors.dark.hex_b71c1c} />
               <Circle cx={15} cy={8} r={8} fill={skin} />
             </Svg>
           </Pivot>
@@ -522,7 +523,7 @@ export function AnimatedBarista({
             {/* Ground shadow */}
             <Animated.View
               style={[
-                { position: 'absolute', left: 38, top: 251, width: 124, height: 16, borderRadius: 8, backgroundColor: '#000' },
+                { position: 'absolute', left: 38, top: 251, width: 124, height: 16, borderRadius: 8, backgroundColor: Colors.dark.hex_000 },
                 shadowStyle,
               ]}
             />
@@ -537,7 +538,7 @@ export function AnimatedBarista({
                   width: 22,
                   height: 6,
                   borderRadius: 11,
-                  backgroundColor: '#B71C1C',
+                  backgroundColor: Colors.dark.hex_b71c1c,
                 },
                 flashStyle,
               ]}
@@ -552,7 +553,7 @@ export function AnimatedBarista({
                   height: 14,
                   borderRadius: 25,
                   borderWidth: 3,
-                  borderColor: '#B71C1C',
+                  borderColor: Colors.dark.hex_b71c1c,
                 },
                 ringStyle,
               ]}
@@ -574,39 +575,39 @@ export function AnimatedBarista({
 
                   {/* Torso in profile */}
                   <Svg width="100%" height="100%" viewBox="0 0 200 300" style={{ position: 'absolute' }}>
-                    <Rect x="94" y="62" width="13" height="18" fill="#FFCDB2" />
-                    <Rect x="82" y="76" width="38" height="96" rx="14" fill="#FFFFFF" stroke="#E3D9D2" strokeWidth="1.5" />
-                    <Path d="M 100 84 L 122 84 L 123 176 L 96 176 Z" fill="#5D4037" />
-                    <Path d="M 104 84 L 100 66" stroke="#5D4037" strokeWidth="4" strokeLinecap="round" />
-                    <Rect x="82" y="114" width="40" height="6" fill="#4E342E" />
-                    <Rect x="103" y="132" width="16" height="24" rx="4" fill="#4E342E" />
+                    <Rect x="94" y="62" width="13" height="18" fill={Colors.dark.hex_ffcdb2} />
+                    <Rect x="82" y="76" width="38" height="96" rx="14" fill={Colors.dark.text} stroke={Colors.dark.hex_e3d9d2} strokeWidth="1.5" />
+                    <Path d="M 100 84 L 122 84 L 123 176 L 96 176 Z" fill={Colors.dark.hex_5d4037} />
+                    <Path d="M 104 84 L 100 66" stroke={Colors.dark.hex_5d4037} strokeWidth="4" strokeLinecap="round" />
+                    <Rect x="82" y="114" width="40" height="6" fill={Colors.dark.hex_4e342e} />
+                    <Rect x="103" y="132" width="16" height="24" rx="4" fill={Colors.dark.hex_4e342e} />
                   </Svg>
 
                   {/* Head in profile (nose to the right) */}
                   <Pivot w={200} h={100} left={0} top={0} px={100} py={68} angle={headAngle}>
                     <Svg width={200} height={100} viewBox="0 0 200 100" style={{ position: 'absolute' }}>
-                      <Circle cx="104" cy="42" r="27" fill="#FFCDB2" />
-                      <Path d="M 128 38 Q 140 45 129 51 Z" fill="#FFCDB2" />
-                      <Circle cx="97" cy="46" r="5" fill="#F0B99B" />
+                      <Circle cx="104" cy="42" r="27" fill={Colors.dark.hex_ffcdb2} />
+                      <Path d="M 128 38 Q 140 45 129 51 Z" fill={Colors.dark.hex_ffcdb2} />
+                      <Circle cx="97" cy="46" r="5" fill={Colors.dark.hex_f0b99b} />
                       <Path
                         d="M 76 46 Q 70 14 104 14 Q 130 16 131 34 Q 112 22 94 27 Q 82 32 84 52 Q 76 56 76 46 Z"
-                        fill="#3E2723"
+                        fill={Colors.dark.hex_3e2723}
                       />
-                      <Path d="M 111 31 L 122 30" stroke="#3E2723" strokeWidth="2.5" strokeLinecap="round" />
+                      <Path d="M 111 31 L 122 30" stroke={Colors.dark.hex_3e2723} strokeWidth="2.5" strokeLinecap="round" />
                       <Path
                         d="M 114 57 Q 121 62 128 55"
-                        stroke="#3E2723"
+                        stroke={Colors.dark.hex_3e2723}
                         strokeWidth="2.5"
                         fill="none"
                         strokeLinecap="round"
                       />
-                      <Circle cx="112" cy="52" r="4" fill="#FF8A65" opacity="0.5" />
-                      <Path d="M 76 26 Q 104 0 130 22 L 142 26 L 74 30 Z" fill="#4E342E" />
-                      <Path d="M 74 30 Q 108 34 142 26" stroke="#3E2723" strokeWidth="2" fill="none" />
+                      <Circle cx="112" cy="52" r="4" fill={Colors.dark.hex_ff8a65} opacity="0.5" />
+                      <Path d="M 76 26 Q 104 0 130 22 L 142 26 L 74 30 Z" fill={Colors.dark.hex_4e342e} />
+                      <Path d="M 74 30 Q 108 34 142 26" stroke={Colors.dark.hex_3e2723} strokeWidth="2" fill="none" />
                     </Svg>
                     <Animated.View
                       style={[
-                        { position: 'absolute', left: 112, top: 34, width: 7, height: 9, borderRadius: 4, backgroundColor: '#3E2723' },
+                        { position: 'absolute', left: 112, top: 34, width: 7, height: 9, borderRadius: 4, backgroundColor: Colors.dark.hex_3e2723 },
                         eyeStyle,
                       ]}
                     />

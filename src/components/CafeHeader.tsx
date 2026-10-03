@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, Dimensions, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { MapPin } from '@/components/Icon';
+import { Colors } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 const { width } = Dimensions.get('window');
 
@@ -54,7 +56,7 @@ export function CafeHeader({
 
         {branchName && (
           <View style={styles.branchContainer}>
-            <MapPin size={isLarge ? 14 : 12} color="rgba(255,255,255,0.7)" />
+            <MapPin size={isLarge ? 14 : 12} color={Colors.dark.textSecondary} />
             <Text 
               style={[
                 styles.branchText,
@@ -87,7 +89,7 @@ const styles = StyleSheet.create({
   },
   imageContainerLarge: {
     marginRight: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.dark.hex_000,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -95,16 +97,16 @@ const styles = StyleSheet.create({
   },
   imageContainerSmall: {
     marginRight: 12,
-    shadowColor: '#000',
+    shadowColor: Colors.dark.hex_000,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
   },
   image: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: Colors.dark.border,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.dark.badge,
   },
   imageLarge: {
     width: 64,
@@ -121,14 +123,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   titleText: {
-    color: '#FFFFFF',
-    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
+    color: Colors.dark.text,
+    fontFamily: Typography.serif,
     letterSpacing: -0.5,
   },
   titleTextLarge: {
     fontSize: 30,
     fontWeight: 'bold',
-    shadowColor: '#000',
+    shadowColor: Colors.dark.hex_000,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   branchText: {
-    color: 'rgba(255,255,255,0.7)',
+    color: Colors.dark.textSecondary,
     marginLeft: 6,
     flex: 1,
     textTransform: 'uppercase',

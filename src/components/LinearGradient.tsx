@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, ViewProps } from 'react-native';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
+import { Colors } from '@/constants/Colors';
 
 export interface LinearGradientPoint {
   x: number;
@@ -17,7 +18,7 @@ export interface LinearGradientProps extends ViewProps {
 
 function parseColor(colorStr: string): { color: string; opacity: number } {
   if (!colorStr || colorStr === 'transparent') {
-    return { color: '#000000', opacity: 0 };
+    return { color: Colors.dark.background, opacity: 0 };
   }
 
   const rgbaMatch = colorStr.match(/rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i);

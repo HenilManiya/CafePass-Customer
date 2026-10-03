@@ -3,9 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, QrCode } from '@/components/Icon';
-import { MotiView } from 'moti';
-import { LinearGradient } from '@/components/LinearGradient';
+import { X } from '@/components/Icon';
+import { CameraPermissionView } from '@/components/scanner/CameraPermissionView';
+import { ScanFrame } from '@/components/scanner/ScanFrame';
+import { Colors } from '@/constants/Colors';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -17,39 +18,7 @@ export default function ScanScreen() {
   }
 
   if (!permission.granted) {
-    return (
-      <View style={styles.permissionContainer}>
-        <LinearGradient 
-          colors={['#000000', '#2E1911']} 
-          style={StyleSheet.absoluteFill} 
-        />
-        <MotiView 
-          from={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          style={styles.permissionCard}
-        >
-          <View style={styles.iconCircle}>
-            <QrCode size={40} color="#C67C4E" />
-          </View>
-          <Text style={styles.titleText}>Camera Access</Text>
-          <Text style={styles.descriptionText}>
-            We need your permission to show the camera so you can scan cafe QR codes.
-          </Text>
-          <TouchableOpacity 
-            style={styles.grantButton}
-            onPress={requestPermission}
-          >
-            <Text style={styles.grantButtonText}>Grant Permission</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.goBackButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.goBackText}>Go Back</Text>
-          </TouchableOpacity>
-        </MotiView>
-      </View>
-    );
+    return <CameraPermissionView onRequestPermission={requestPermission} />;
   }
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
@@ -98,28 +67,7 @@ export default function ScanScreen() {
           </View>
           <View style={styles.headerSpacer} />
         </View>
-        <View style={styles.scanAreaContainer} pointerEvents="none">
-          <MotiView
-            from={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 15 }}
-            style={styles.scanFrame}
-          >
-            <View style={[styles.corner, styles.cornerTL]} />
-            <View style={[styles.corner, styles.cornerTR]} />
-            <View style={[styles.corner, styles.cornerBL]} />
-            <View style={[styles.corner, styles.cornerBR]} />
-            <MotiView 
-              from={{ translateY: -130, opacity: 0 }}
-              animate={{ translateY: 130, opacity: [0, 1, 1, 0] }}
-              transition={{ loop: true, type: 'timing', duration: 2000 }}
-              style={styles.scanLine}
-            />
-          </MotiView>
-          <View style={styles.instructionBadge}>
-            <Text style={styles.instructionText}>Point camera at the Cafe's QR Code</Text>
-          </View>
-        </View>
+        <ScanFrame />
       </SafeAreaView>
     </View>
   );
@@ -128,69 +76,8 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.dark.background,
     overflow: 'hidden',
-  },
-  permissionContainer: {
-    flex: 1,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  permissionCard: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: 32,
-    borderRadius: 32,
-    alignItems: 'center',
-    width: '100%',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  iconCircle: {
-    backgroundColor: 'rgba(198,124,78,0.1)',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  titleText: {
-    fontSize: 24,
-    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  descriptionText: {
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
-  },
-  grantButton: {
-    backgroundColor: '#C67C4E',
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  grantButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 18,
-    letterSpacing: 0.5,
-  },
-  goBackButton: {
-    marginTop: 24,
-    paddingVertical: 8,
-  },
-  goBackText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: 'bold',
   },
   camera: {
     position: 'absolute',
@@ -215,23 +102,23 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 48,
     height: 48,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: Colors.dark.overlay,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.dark.badge,
   },
   headerBadge: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: Colors.dark.overlay,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.dark.badge,
   },
   headerBadgeText: {
-    color: '#FFFFFF',
+    color: Colors.dark.text,
     fontWeight: 'bold',
     letterSpacing: 2,
     fontSize: 12,
@@ -240,77 +127,5 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 48,
     height: 48,
-  },
-  scanAreaContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scanFrame: {
-    width: 288,
-    height: 288,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 32,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  corner: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderColor: '#FFFFFF',
-  },
-  cornerTL: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 4,
-    borderLeftWidth: 4,
-    borderTopLeftRadius: 32,
-  },
-  cornerTR: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 4,
-    borderRightWidth: 4,
-    borderTopRightRadius: 32,
-  },
-  cornerBL: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 4,
-    borderLeftWidth: 4,
-    borderBottomLeftRadius: 32,
-  },
-  cornerBR: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 4,
-    borderRightWidth: 4,
-    borderBottomRightRadius: 32,
-  },
-  scanLine: {
-    width: '100%',
-    height: 2,
-    backgroundColor: '#C67C4E',
-    shadowColor: '#C67C4E',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-  },
-  instructionBadge: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-    marginTop: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  instructionText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
   },
 });

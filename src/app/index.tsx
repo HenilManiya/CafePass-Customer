@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Dimensions, StyleSheet, Platform } from 'react-native';
-import { Image } from 'expo-image';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/shared';
 import { useAuthStore } from '@/context/AuthContext';
-import { QrCode, LogOut, Coffee } from '@/components/Icon';
+import { LogOut } from '@/components/Icon';
 import { MotiView } from 'moti';
 import { LinearGradient } from '@/components/LinearGradient';
-import { CafeHeader } from '@/components/CafeHeader';
 import { CafePassLogo } from '@/components/CafePassLogo';
-
-const { width } = Dimensions.get('window');
+import { DigitalCard } from '@/components/cards/DigitalCard';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
+import { Colors } from '@/constants/Colors';
+import { Typography } from '@/constants/Typography';
 
 export default function Home() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { session, profile, signOut } = useAuthStore();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,87 +53,14 @@ export default function Home() {
     setLoading(false);
   };
 
-  const renderCard = ({ item, index }: { item: any; index: number }) => {
-    const punches = item?.punch_count || 0;
-    const required = item?.cafes?.max_punches || 10;
-    const progress = Math.min(Math.max((punches / required) * 100, 0), 100);
-    const rewards = item?.rewards_available || 0;
-
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 30 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ delay: index * 100 }}
-        style={styles.cardContainer}
-      >
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => router.push(`/cafe/${item.cafe_id}`)}
-          style={styles.cardWrapper}
-        >
-          {/* Cafe Image Background */}
-          <Image
-            source={{ uri: item.cafes?.image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80' }}
-            style={styles.cardImage}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={150}
-          />
-          
-          <View style={styles.cardOverlay}>
-            <View style={styles.cardContent}>
-              <View style={styles.cardHeader}>
-                <CafeHeader 
-                  variant="small" 
-                  cafeName={item.cafes?.name} 
-                  branchName={item.cafes?.branch_name} 
-                  logoUrl={item.cafes?.logo_url || undefined} 
-                />
-
-                <View style={styles.punchesBadge}>
-                  <Text style={styles.punchesText}>{punches}<Text style={styles.punchesRequired}>/{required}</Text></Text>
-                </View>
-              </View>
-
-              {rewards > 0 && (
-                <View style={styles.rewardsBadge}>
-                  <Text style={styles.rewardsText}>🎁 {rewards}</Text>
-                </View>
-              )}
-
-              {/* Progress Bar Area */}
-              <View style={styles.progressContainer}>
-                <View style={styles.progressHeader}>
-                  <Text style={styles.progressLabel}>Rewards Progress</Text>
-                  <Text 
-                    style={styles.progressStatusText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {required - punches <= 0 ? 'Free drink ready!' : `${required - punches} more for a free drink`}
-                  </Text>
-                </View>
-                
-                <View style={styles.progressBarTrack}>
-                  <MotiView
-                    style={[styles.progressBarFill, { width: `${progress}%` }]}
-                    from={{ translateX: -300 }}
-                    animate={{ translateX: 0 }}
-                    transition={{ type: 'spring', damping: 14, delay: index * 100 + 300 }}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </MotiView>
-    );
-  };
+  const renderCard = ({ item, index }: { item: any; index: number }) => (
+    <DigitalCard item={item} index={index} />
+  );
 
   return (
     <View style={styles.container}>
       <LinearGradient 
-        colors={['#000000', '#2E1911']} 
+        colors={[Colors.dark.background, Colors.dark.hex_2e1911]} 
         style={StyleSheet.absoluteFill} 
       />
       <SafeAreaView style={styles.safeArea}>
@@ -152,66 +77,23 @@ export default function Home() {
           </MotiView>
           <MotiView from={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}>
             <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
-              <LogOut size={16} color="#C67C4E" />
+              <LogOut size={16} color={Colors.dark.primary} />
             </TouchableOpacity>
           </MotiView>
         </View>
 
-      <FlatList
-        data={cards}
-        keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
-        renderItem={renderCard}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        ListEmptyComponent={
-          !loading ? (
-            <MotiView
-              from={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={styles.emptyStateContainer}
-            >
-              <View style={styles.emptyStateLogoWrapper}>
-                <CafePassLogo size={72} />
-              </View>
-              <Text style={styles.emptyStateTitle}>No cards yet!</Text>
-              <Text style={styles.emptyStateDesc}>
-                Visit a participating cafe and scan their QR code to grab your first digital punch card.
-              </Text>
-            </MotiView>
-          ) : null
-        }
-      />
+        <FlatList
+          data={cards}
+          keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
+          renderItem={renderCard}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          ListEmptyComponent={!loading ? <EmptyState /> : null}
+        />
 
-      {/* Floating Action Button */}
-      <View style={[styles.fabContainer, { paddingBottom: Math.max(insets.bottom + 16, 32) }]} pointerEvents="box-none">
-        <MotiView
-          from={{ translateY: 100, opacity: 0 }}
-          animate={{ translateY: 0, opacity: 1 }}
-          transition={{ type: 'spring', damping: 15, delay: 400 }}
-        >
-          <TouchableOpacity
-            onPress={() => router.push('/scan')}
-            activeOpacity={0.8}
-            style={styles.fabWrapper}
-          >
-            {/* Subtle pulse effect */}
-            <MotiView
-              from={{ opacity: 0.5, scale: 1 }}
-              animate={{ opacity: 0, scale: 1.2 }}
-              transition={{ loop: true, type: 'timing', duration: 2000 }}
-              style={styles.fabPulse}
-            />
-            
-            {/* Proper High-End FAB */}
-            <View style={styles.fabButton}>
-              <QrCode color="white" size={20} />
-              <Text style={styles.fabText}>Scan QR</Text>
-            </View>
-          </TouchableOpacity>
-        </MotiView>
-      </View>
+        <FloatingActionButton />
       </SafeAreaView>
     </View>
   );
@@ -220,7 +102,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.dark.background,
   },
   safeArea: {
     flex: 1,
@@ -234,8 +116,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     zIndex: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderBottomColor: Colors.dark.rgba_255_255_255_0_05,
+    backgroundColor: Colors.dark.rgba_0_0_0_0_2,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -243,7 +125,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   greetingText: {
-    color: '#C67C4E',
+    color: Colors.dark.primary,
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -252,191 +134,20 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
-    color: '#FFFFFF',
+    fontFamily: Typography.serif,
+    color: Colors.dark.text,
     letterSpacing: -0.5,
   },
   signOutButton: {
-    backgroundColor: 'rgba(198, 124, 78, 0.1)',
+    backgroundColor: Colors.dark.primaryLight,
     padding: 12,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(198, 124, 78, 0.2)',
+    borderColor: Colors.dark.primaryMuted,
   },
   listContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 140,
-  },
-  cardContainer: {
-    marginBottom: 24,
-  },
-  cardWrapper: {
-    borderRadius: 32,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#27272a',
-    backgroundColor: '#18181b',
-  },
-  cardImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-  },
-  cardOverlay: {
-    width: '100%',
-    backgroundColor: 'rgba(15,8,4,0.72)',
-  },
-  cardContent: {
-    padding: 20,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  punchesBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  punchesText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
-  },
-  punchesRequired: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-  },
-  rewardsBadge: {
-    position: 'absolute',
-    top: 20,
-    right: 80,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  rewardsText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  progressContainer: {
-    marginTop: 4,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: 'bold',
-    fontSize: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  progressStatusText: {
-    color: '#C67C4E',
-    fontWeight: 'bold',
-    fontSize: 12,
-    fontStyle: 'italic',
-    flex: 1,
-    textAlign: 'right',
-  },
-  progressBarTrack: {
-    height: 10,
-    width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 999,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.5)',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#C67C4E',
-    borderRadius: 999,
-  },
-  emptyStateContainer: {
-    marginTop: 80,
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  emptyStateLogoWrapper: {
-    marginBottom: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyStateTitle: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontFamily: Platform.select({ ios: 'ui-serif', default: 'serif' }),
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  emptyStateDesc: {
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
-    fontSize: 15,
-    paddingHorizontal: 16,
-    lineHeight: 24,
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  fabWrapper: {
-    position: 'relative',
-  },
-  fabPulse: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(198, 124, 78, 0.2)',
-    borderRadius: 999,
-  },
-  fabButton: {
-    backgroundColor: '#C67C4E',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(198, 124, 78, 0.1)',
-    shadowColor: '#C67C4E',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-  },
-  fabText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-    letterSpacing: 0.5,
-    marginLeft: 12,
   },
 });

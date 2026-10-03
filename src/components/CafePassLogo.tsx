@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react';import { Colors } from '@/constants/Colors';
+
 import Svg, {
   Path,
   Rect,
@@ -37,27 +38,27 @@ export const CafePassLogo: React.FC<CafePassLogoProps> = ({
       <Defs>
         {/* Cup & Handle Caramel Gradient */}
         <LinearGradient id="cupGrad" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0%" stopColor="#F2B482" />
-          <Stop offset="100%" stopColor="#B96937" />
+          <Stop offset="0%" stopColor={Colors.dark.hex_f2b482} />
+          <Stop offset="100%" stopColor={Colors.dark.hex_b96937} />
         </LinearGradient>
 
         {/* Center Steam Luminous Gradient */}
         <LinearGradient id="steamCenter" x1="0" y1="1" x2="0" y2="0">
-          <Stop offset="0%" stopColor="#E09C68" />
-          <Stop offset="60%" stopColor="#FFF0D0" />
-          <Stop offset="100%" stopColor="#FFFFFF" />
+          <Stop offset="0%" stopColor={Colors.dark.hex_e09c68} />
+          <Stop offset="60%" stopColor={Colors.dark.hex_fff0d0} />
+          <Stop offset="100%" stopColor={Colors.dark.text} />
         </LinearGradient>
 
         {/* Outer Steam Gradient */}
         <LinearGradient id="steamOuter" x1="0" y1="1" x2="0" y2="0">
-          <Stop offset="0%" stopColor="#C67C4E" stopOpacity="0.8" />
-          <Stop offset="100%" stopColor="#F5D0A9" stopOpacity="0.95" />
+          <Stop offset="0%" stopColor={Colors.dark.primary} stopOpacity="0.8" />
+          <Stop offset="100%" stopColor={Colors.dark.hex_f5d0a9} stopOpacity="0.95" />
         </LinearGradient>
 
         {/* Golden Bean Gradient */}
         <LinearGradient id="beanGrad" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0%" stopColor="#FFF2D6" />
-          <Stop offset="100%" stopColor="#D58E52" />
+          <Stop offset="0%" stopColor={Colors.dark.hex_fff2d6} />
+          <Stop offset="100%" stopColor={Colors.dark.hex_d58e52} />
         </LinearGradient>
       </Defs>
 
@@ -108,8 +109,8 @@ export const CafePassLogo: React.FC<CafePassLogoProps> = ({
           width="190"
           height="105"
           rx="18"
-          fill="#140A05"
-          stroke="#F2D2A0"
+          fill={Colors.dark.hex_140a05}
+          stroke={Colors.dark.hex_f2d2a0}
           strokeWidth="3.5"
         />
 
@@ -125,16 +126,16 @@ export const CafePassLogo: React.FC<CafePassLogoProps> = ({
         {/* Bean S-Curve Crease */}
         <Path
           d="M 240 276 C 232 297, 248 317, 240 338"
-          stroke="#140A05"
+          stroke={Colors.dark.hex_140a05}
           strokeWidth="4.5"
           strokeLinecap="round"
         />
 
         {/* 4 Loyalty Stamp Punch Dots */}
-        <Circle cx="172" cy="292" r="5.5" fill="#F2D2A0" />
-        <Circle cx="172" cy="322" r="5.5" fill="#F2D2A0" />
-        <Circle cx="308" cy="292" r="5.5" fill="#F2D2A0" />
-        <Circle cx="308" cy="322" r="5.5" fill="#F2D2A0" />
+        <Circle cx="172" cy="292" r="5.5" fill={Colors.dark.hex_f2d2a0} />
+        <Circle cx="172" cy="322" r="5.5" fill={Colors.dark.hex_f2d2a0} />
+        <Circle cx="308" cy="292" r="5.5" fill={Colors.dark.hex_f2d2a0} />
+        <Circle cx="308" cy="322" r="5.5" fill={Colors.dark.hex_f2d2a0} />
 
         {/* 5. Minimalist Saucer Base */}
         <Rect
