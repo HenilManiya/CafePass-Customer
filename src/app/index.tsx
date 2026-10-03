@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/shared';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/context/AuthContext';
 import { QrCode, LogOut, Coffee } from '@/components/Icon';
 import { MotiView } from 'moti';
 import { LinearGradient } from '@/components/LinearGradient';

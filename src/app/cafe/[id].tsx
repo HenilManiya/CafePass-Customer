@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/context/AuthContext';
 import { supabase } from '@/shared';
 import QRCode from 'react-native-qrcode-svg';
 import { MotiView, AnimatePresence } from 'moti';

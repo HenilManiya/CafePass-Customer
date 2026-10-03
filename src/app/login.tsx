@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '@/context/AuthContext';
 import { supabase } from '@/shared';
 import { Coffee, ArrowRight, AlertCircle, Eye, EyeOff } from '@/components/Icon';
 import { MotiView, AnimatePresence } from 'moti';
