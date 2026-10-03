@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator, ScrollView, Modal, Image, Linking, Animated as RNAnimated } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator, ScrollView, Modal, Linking, Animated as RNAnimated } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -114,44 +115,44 @@ export default function CafeCardScreen() {
   const fetchCardDetails = useCallback(async () => {
     if (!session || !id) return;
 
-    // Fetch active card
-    const { data: cardData } = await supabase
-      .from('digital_cards')
-      .select('*, cafes(max_punches)')
-      .eq('customer_id', session.user.id)
-      .eq('cafe_id', id)
-      .eq('is_completed', false)
-      .single();
+    // Run active card, cafe details, and rewards count queries in parallel
+    const [cardRes, cafeRes, rewardsRes] = await Promise.all([
+      supabase
+        .from('digital_cards')
+        .select('*, cafes(max_punches)')
+        .eq('customer_id', session.user.id)
+        .eq('cafe_id', id)
+        .eq('is_completed', false)
+        .maybeSingle(),
+      supabase
+        .from('cafes')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle(),
+      supabase
+        .from('rewards')
+        .select('id')
+        .eq('customer_id', session.user.id)
+        .eq('cafe_id', id)
+        .eq('status', 'AVAILABLE'),
+    ]);
 
-    if (cardData) {
+    if (cardRes.data) {
       setCard((prev: any) => {
         // If the screen is proudly displaying a completed card, don't overwrite it with a blank one!
         const max = cafeRef.current?.max_punches || prev?.cafes?.max_punches || 10;
-        if (prev && prev.punch_count >= max && cardData.punch_count === 0) {
+        if (prev && prev.punch_count >= max && cardRes.data.punch_count === 0) {
           return prev;
         }
-        return cardData;
+        return cardRes.data;
       });
     }
 
-    // Fetch cafe details separately to ensure we ALWAYS have max_punches, even if card is null
-    // or if a Realtime payload overrides the card state without joined tables.
-    const { data: cafeData } = await supabase
-      .from('cafes')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (cafeData) setCafeDetails(cafeData);
+    if (cafeRes.data) {
+      setCafeDetails(cafeRes.data);
+    }
 
-    // Fetch rewards count
-    const { data: rewardsData } = await supabase
-      .from('rewards')
-      .select('id')
-      .eq('customer_id', session.user.id)
-      .eq('cafe_id', id)
-      .eq('status', 'AVAILABLE');
-
-    setRewardsAvailable(rewardsData?.length || 0);
+    setRewardsAvailable(rewardsRes.data?.length || 0);
   }, [id, session]);
 
   const fetchQRToken = useCallback(async (isManual = false) => {
@@ -214,19 +215,26 @@ export default function CafeCardScreen() {
     fetchQRToken(false); // Only generate QR when user clicks Show QR button
   };
 
+  const userId = session?.user?.id;
+  const fetchCardDetailsRef = useRef(fetchCardDetails);
+  useEffect(() => {
+    fetchCardDetailsRef.current = fetchCardDetails;
+  }, [fetchCardDetails]);
+
   // Listen for real-time punch updates from the Cafe!
   useEffect(() => {
-    if (!session?.user?.id || !id) return;
+    if (!userId || !id) return;
 
+    const channelName = `customer_channel_${userId}_${id}`;
     const channel = supabase
-      .channel(`public:customer_${session.user.id}}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'digital_cards',
-          filter: `customer_id=eq.${session.user.id}`,
+          filter: `customer_id=eq.${userId}`,
         },
         (payload) => {
           console.log('[realtime] Card updated via scan!', payload);
@@ -252,7 +260,7 @@ export default function CafeCardScreen() {
                 // Do nothing, let them admire their fully stamped card!
               } else {
                 setCard(newRecord);
-                fetchCardDetails();
+                fetchCardDetailsRef.current();
               }
               setIsQRModalVisible(false); // Close modal on any valid update
             }
@@ -265,11 +273,11 @@ export default function CafeCardScreen() {
           event: '*',
           schema: 'public',
           table: 'rewards',
-          filter: `customer_id=eq.${session.user.id}`,
+          filter: `customer_id=eq.${userId}`,
         },
         (payload) => {
           console.log('[realtime] Rewards updated!');
-          fetchCardDetails();
+          fetchCardDetailsRef.current();
         }
       )
       .subscribe((status) => {
@@ -280,7 +288,7 @@ export default function CafeCardScreen() {
       console.log('[realtime] Unsubscribing channel...');
       supabase.removeChannel(channel);
     };
-  }, [id, session, fetchCardDetails]);
+  }, [id, userId]);
 
   const handleStampHit = () => {
     if (animatingPunch) {
@@ -329,7 +337,9 @@ export default function CafeCardScreen() {
         <Image
           source={{ uri: cafeDetails.image_url }}
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
         />
       )}
       <LinearGradient

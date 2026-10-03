@@ -1,16 +1,12 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import '../global.css';
 
-export default function Layout() {
-  const { session, initialized, initialize } = useAuthStore();
+function RootLayoutNav() {
+  const { session, initialized } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-
-  useEffect(() => {
-    initialize();
-  }, []);
 
   useEffect(() => {
     if (!initialized) return;
@@ -26,7 +22,15 @@ export default function Layout() {
     }
   }, [session, initialized, segments]);
 
-  if (!initialized) return null; // Or a loading spinner
+  if (!initialized) return null;
 
   return <Stack screenOptions={{ headerShown: false }} />;
+}
+
+export default function Layout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
 }

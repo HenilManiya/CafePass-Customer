@@ -156,76 +156,89 @@ export default function Login() {
         colors={['#000000', '#2E1911']} 
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} 
       />
-      <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: Math.max(insets.bottom, 10), paddingTop: Math.max(insets.top, 10) }}>
+      <ScrollView 
+        contentContainerStyle={{ 
+          flexGrow: 1, 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          paddingBottom: Math.max(insets.bottom, 12), 
+          paddingTop: Math.max(insets.top, 12),
+          paddingHorizontal: 16,
+        }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <MotiView 
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ delay: 100 }}
           className="items-center"
-          style={{ justifyContent: 'center', marginBottom: 16 }}
+          style={{ justifyContent: 'center', marginBottom: isLogin ? 16 : 8 }}
         >
-          <View style={{ marginBottom: 6, alignItems: 'center', justifyContent: 'center' }}>
-            <CafePassLogo size={height * 0.16} />
+          <View style={{ marginBottom: 4, alignItems: 'center', justifyContent: 'center' }}>
+            <CafePassLogo size={isLogin ? Math.min(height * 0.12, 84) : Math.min(height * 0.075, 54)} />
           </View>
-          <Text className="font-serif text-white tracking-tight" style={{ fontSize: height * 0.04 }}>CafePass</Text>
-          {!isSmallDevice && <Text className="text-white/70 font-sans tracking-wide" style={{ fontSize: height * 0.02, marginTop: height * 0.005 }}>Your digital coffee companion</Text>}
+          <Text className="font-serif text-white tracking-tight" style={{ fontSize: isLogin ? 28 : 22 }}>CafePass</Text>
+          <Text className="text-white/70 font-sans tracking-wide" style={{ fontSize: isLogin ? 13 : 11, marginTop: 2 }}>
+            {isLogin ? 'Your digital coffee companion' : 'Create your digital pass'}
+          </Text>
         </MotiView>
 
         <MotiView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 200 }}
-          className="bg-black/40 shadow-lg border border-white/10 rounded-[32px]"
-          style={{ width: '90%', padding: '6%', paddingVertical: '8%', backdropFilter: 'blur(10px)' }}
+          className="bg-black/40 shadow-lg border border-white/10 rounded-[28px]"
+          style={{ width: '92%', maxWidth: 400, paddingHorizontal: 18, paddingVertical: isLogin ? 22 : 14 }}
         >
-          
           <AnimatePresence>
             {serverError ? (
               <MotiView 
                 from={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-red-50 p-4 rounded-2xl mb-6 flex-row items-center border border-red-100"
+                className="bg-red-50 p-3 rounded-2xl mb-4 flex-row items-center border border-red-100"
               >
-                <AlertCircle size={20} color="#DC2626" />
-                <Text className="text-red-700 ml-2 font-sans flex-1">{serverError}</Text>
+                <AlertCircle size={18} color="#DC2626" />
+                <Text className="text-red-700 ml-2 font-sans flex-1 text-xs">{serverError}</Text>
               </MotiView>
             ) : null}
           </AnimatePresence>
 
           {!isLogin && (
             <>
-              <View style={{ marginBottom: height * 0.015 }}>
-                <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Full Name</Text>
+              <View style={{ marginBottom: isLogin ? 12 : 8 }}>
+                <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Full Name</Text>
                 <TextInput 
                   placeholder="John Doe"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   value={fullName}
                   onChangeText={(val) => { setFullName(val); if (errors.fullName) setErrors({...errors, fullName: ''}) }}
-                  className={`bg-zinc-800/80 px-4 rounded-xl text-white font-sans border ${errors.fullName ? 'border-red-500' : 'border-primary/20'}`}
-                  style={{ height: height * 0.06, fontSize: height * 0.018 }}
+                  className={`bg-zinc-800/80 px-3.5 rounded-xl text-white font-sans border ${errors.fullName ? 'border-red-500' : 'border-primary/20'}`}
+                  style={{ height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 }}
                 />
-                {errors.fullName && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.fullName}</Text>}
+                {errors.fullName && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.fullName}</Text>}
               </View>
 
-              <View style={{ marginBottom: height * 0.015 }}>
-                <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Phone Number</Text>
+              <View style={{ marginBottom: isLogin ? 12 : 8 }}>
+                <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Phone Number</Text>
                 <TextInput 
                   placeholder="+1 234 567 8900"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={(val) => { setPhone(val); if (errors.phone) setErrors({...errors, phone: ''}) }}
-                  className={`bg-zinc-800/80 px-4 rounded-xl text-white font-sans border ${errors.phone ? 'border-red-500' : 'border-primary/20'}`}
-                  style={{ height: height * 0.06, fontSize: height * 0.018 }}
+                  className={`bg-zinc-800/80 px-3.5 rounded-xl text-white font-sans border ${errors.phone ? 'border-red-500' : 'border-primary/20'}`}
+                  style={{ height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 }}
                 />
-                {errors.phone && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.phone}</Text>}
+                {errors.phone && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.phone}</Text>}
               </View>
             </>
           )}
 
-          <View style={{ marginBottom: height * 0.015 }}>
-            <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Email</Text>
+          <View style={{ marginBottom: isLogin ? 12 : 8 }}>
+            <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Email</Text>
             <TextInput 
               placeholder="hello@coffeelover.com"
               placeholderTextColor="rgba(255, 255, 255, 0.3)"
@@ -233,41 +246,44 @@ export default function Login() {
               autoCapitalize="none"
               value={email}
               onChangeText={(val) => { setEmail(val); if (errors.email) setErrors({...errors, email: ''}) }}
-              className={`bg-zinc-800/80 px-4 rounded-xl text-white font-sans border ${errors.email ? 'border-red-500' : 'border-primary/20'}`}
-              style={{ height: height * 0.06, fontSize: height * 0.018 }}
+              className={`bg-zinc-800/80 px-3.5 rounded-xl text-white font-sans border ${errors.email ? 'border-red-500' : 'border-primary/20'}`}
+              style={{ height: isLogin ? 48 : 40, fontSize: isLogin ? 15 : 13 }}
             />
-            {errors.email && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.email}</Text>}
+            {errors.email && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.email}</Text>}
           </View>
 
-          <View style={{ marginBottom: height * 0.025 }}>
-            <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Password</Text>
-            <View className={`bg-zinc-800/80 rounded-xl border ${errors.password ? 'border-red-500' : 'border-primary/20'} flex-row items-center pr-4`} style={{ height: height * 0.06 }}>
+          <View style={{ marginBottom: isLogin ? 16 : 10 }}>
+            <Text className="text-white/70 font-bold ml-1 uppercase tracking-wider text-[10px]" style={{ marginBottom: 2 }}>Password</Text>
+            <View 
+              className={`bg-zinc-800/80 rounded-xl border ${errors.password ? 'border-red-500' : 'border-primary/20'} flex-row items-center pr-3.5`} 
+              style={{ height: isLogin ? 48 : 40 }}
+            >
               <TextInput 
                 placeholder="••••••••"
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
-                className="flex-1 px-4 text-white font-sans h-full"
-                style={{ fontSize: height * 0.018 }}
+                className="flex-1 px-3.5 text-white font-sans h-full"
+                style={{ fontSize: isLogin ? 15 : 13 }}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                {showPassword ? <EyeOff size={height * 0.022} color="#C67C4E" /> : <Eye size={height * 0.022} color="#C67C4E" />}
+                {showPassword ? <EyeOff size={18} color="#C67C4E" /> : <Eye size={18} color="#C67C4E" />}
               </TouchableOpacity>
             </View>
-            {errors.password && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.password}</Text>}
+            {errors.password && <Text className="text-red-400 text-xs mt-0.5 ml-1">{errors.password}</Text>}
           </View>
 
           <TouchableOpacity 
             disabled={loading}
             className={`bg-primary border border-primary/50 px-6 rounded-xl flex-row items-center justify-center shadow-lg shadow-primary/20 ${loading ? 'opacity-70' : ''}`}
-            style={{ height: height * 0.065 }}
+            style={{ height: isLogin ? 48 : 42, marginTop: 4 }}
             onPress={handleAuth}
           >
-            <Text className="text-white font-bold mr-2 tracking-wide" style={{ fontSize: height * 0.02 }}>
+            <Text className="text-white font-bold mr-2 tracking-wide" style={{ fontSize: isLogin ? 15 : 14 }}>
               {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Text>
-            {!loading && <ArrowRight size={height * 0.025} color="#FFFFFF" />}
+            {!loading && <ArrowRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
         </MotiView>
 
@@ -275,11 +291,10 @@ export default function Login() {
           from={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 300 }}
-          className="items-center"
-          style={{ height: height * 0.1, justifyContent: 'center' }}
+          className="items-center py-3"
         >
-          <TouchableOpacity onPress={resetForm}>
-            <Text className="text-white/70 font-sans" style={{ fontSize: height * 0.016 }}>
+          <TouchableOpacity onPress={resetForm} className="py-1 px-3">
+            <Text className="text-white/70 font-sans text-xs">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <Text className="text-primary font-bold">{isLogin ? "Sign Up" : "Log In"}</Text>
             </Text>

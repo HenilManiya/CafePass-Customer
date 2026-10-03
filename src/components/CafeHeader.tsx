@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Dimensions } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { MapPin } from '@/components/Icon';
 
 const { width } = Dimensions.get('window');
@@ -26,7 +27,10 @@ export function CafeHeader({
           <Image
             source={{ uri: logoUrl }}
             className="rounded-full bg-white/10 border-[1.5px] border-white/20"
-            style={isLarge ? { width: 64, height: 64 } : { width: width * 0.12, height: width * 0.12 }}
+            style={isLarge ? { width: 64, height: 64, borderRadius: 32 } : { width: width * 0.12, height: width * 0.12, borderRadius: (width * 0.12) / 2 }}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={150}
           />
         </View>
       )}
@@ -43,8 +47,11 @@ export function CafeHeader({
         {branchName && (
           <View className="flex-row items-center mt-1">
             <MapPin size={isLarge ? 14 : 12} color="rgba(255,255,255,0.7)" />
-            <Text className={`text-white/70 ml-1.5 font-sans uppercase ${isLarge ? 'text-xs tracking-widest font-bold' : 'text-[10px] tracking-wider'}`}>
-              {branchName} Branch
+            <Text 
+              className={`text-white/70 ml-1.5 font-sans uppercase flex-1 ${isLarge ? 'text-xs tracking-widest font-bold' : 'text-[10px] tracking-wider'}`}
+              numberOfLines={1}
+            >
+              {branchName.toLowerCase().includes('branch') ? branchName : `${branchName} Branch`}
             </Text>
           </View>
         )}

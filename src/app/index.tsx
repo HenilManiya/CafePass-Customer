@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/shared';
@@ -76,40 +77,48 @@ export default function Home() {
         >
           {/* Cafe Image Background */}
           <Image
-            source={{ uri: item.cafes?.image_url ? `${item.cafes.image_url}?t=${new Date().getTime()}` : 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80' }}
+            source={{ uri: item.cafes?.image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80' }}
             className="absolute inset-0 w-full h-full"
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={150}
           />
           
           <View className="w-full" style={{ backgroundColor: 'rgba(15,8,4,0.72)' }}>
-            <View className="p-6">
-              <View className="flex-row justify-between items-start mb-6">
+            <View className="p-5">
+              <View className="flex-row justify-between items-start mb-5">
                 <CafeHeader 
                   variant="small" 
                   cafeName={item.cafes?.name} 
                   branchName={item.cafes?.branch_name} 
-                  logoUrl={item.cafes?.logo_url ? `${item.cafes.logo_url}?t=${new Date().getTime()}` : undefined} 
+                  logoUrl={item.cafes?.logo_url || undefined} 
                 />
 
-                <View className="bg-white/20 px-3.5 py-1.5 rounded-full border border-white/10 items-center justify-center">
+                <View className="bg-white/20 px-3.5 py-1.5 rounded-full border border-white/10 items-center justify-center shrink-0">
                   <Text className="text-white font-bold text-base font-serif">{punches}<Text className="text-white/70 text-xs">/{required}</Text></Text>
                 </View>
               </View>
 
               {rewards > 0 && (
-                <View className="absolute top-6 right-20 bg-white/20 px-3 py-1 rounded-full shadow-lg border border-white/10">
+                <View className="absolute top-5 right-20 bg-white/20 px-3 py-1 rounded-full shadow-lg border border-white/10">
                   <Text className="text-white font-bold text-xs">🎁 {rewards}</Text>
                 </View>
               )}
 
               {/* Progress Bar Area */}
-              <View className="mt-2">
-                <View className="flex-row justify-between mb-3 items-end">
-                  <Text className="text-white/70 font-bold text-[10px] uppercase tracking-[0.1em]">Rewards Progress</Text>
-                  <Text className="text-primary font-bold text-xs italic">{required - punches} more for a free drink!</Text>
+              <View className="mt-1">
+                <View className="flex-row justify-between items-center mb-2 gap-2">
+                  <Text className="text-white/70 font-bold text-[10px] uppercase tracking-[0.1em] shrink-0">Rewards Progress</Text>
+                  <Text 
+                    className="text-primary font-bold text-xs italic flex-1 text-right"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {required - punches <= 0 ? 'Free drink ready!' : `${required - punches} more for a free drink`}
+                  </Text>
                 </View>
                 
-                <View className="h-3 w-full bg-white/10 rounded-full overflow-hidden border border-black/50">
+                <View className="h-2.5 w-full bg-white/10 rounded-full overflow-hidden border border-black/50">
                   <MotiView
                     className="h-full bg-primary rounded-full shadow-lg shadow-primary/40"
                     style={{ width: `${progress}%` }}
