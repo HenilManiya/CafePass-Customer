@@ -181,10 +181,10 @@ export default function Login() {
           style={[styles.headerContainer, { marginBottom: isLogin ? 16 : 8 }]}
         >
           <View style={styles.logoWrapper}>
-            <CafePassLogo size={isLogin ? Math.min(height * 0.12, 84) : Math.min(height * 0.075, 54)} />
+            <CafePassLogo size={Math.min(height * 0.1, 74)} />
           </View>
-          <Text style={[styles.appName, { fontSize: isLogin ? 28 : 22 }]}>CafePass</Text>
-          <Text style={[styles.appSubtitle, { fontSize: isLogin ? 13 : 11 }]}>
+          <Text style={[styles.appName, { fontSize: 26 }]}>CafePass</Text>
+          <Text style={[styles.appSubtitle, { fontSize: 13 }]}>
             {isLogin ? 'Your digital coffee companion' : 'Create your digital pass'}
           </Text>
         </MotiView>
