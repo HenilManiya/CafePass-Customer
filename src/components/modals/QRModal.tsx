@@ -101,6 +101,11 @@ export function QRModal({
                       size={width * 0.45}
                       color={Colors.dark.background}
                       backgroundColor="white"
+                      logo={require('../../../assets/images/icon.png')}
+                      logoSize={width * 0.1}
+                      logoBackgroundColor="white"
+                      logoBorderRadius={10}
+                      logoMargin={4}
                     />
                   </MotiView>
                 </AnimatePresence>
