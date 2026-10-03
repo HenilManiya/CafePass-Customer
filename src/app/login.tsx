@@ -70,7 +70,7 @@ export default function Login() {
         // Server-side authentication via Edge Function
         console.log('[customer-login] Invoking auth edge function (login)...');
         const { data: res, error } = await supabase.functions.invoke('auth', {
-          body: { action: 'login', email, password }
+          body: { action: 'login', email, password, appType: 'customer' }
         });
         console.log('[customer-login] login response:', JSON.stringify({ error, resError: res?.error, hasSession: !!res?.data?.session }));
 
@@ -197,7 +197,7 @@ export default function Login() {
                 exit={{ opacity: 0, height: 0 }}
                 style={styles.errorAlert}
               >
-                <AlertCircle size={18} color="#DC2626" />
+                <AlertCircle size={18} color="#F87171" />
                 <Text style={styles.errorAlertText}>{serverError}</Text>
               </MotiView>
             ) : null}
@@ -361,20 +361,20 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   errorAlert: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(127, 29, 29, 0.4)',
     padding: 12,
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: 12,
+    marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   errorAlertText: {
-    color: '#B91C1C',
+    color: '#FECACA',
     marginLeft: 8,
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
   },
   inputLabel: {
     color: 'rgba(255, 255, 255, 0.7)',
