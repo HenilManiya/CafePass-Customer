@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, QrCode } from 'lucide-react-native';
+import { X, QrCode } from '@/components/Icon';
 import { MotiView } from 'moti';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -17,21 +18,26 @@ export default function ScanScreen() {
 
   if (!permission.granted) {
     return (
-      <View className="flex-1 bg-[#FAF6F0] justify-center items-center px-8">
+      <View className="flex-1 bg-black justify-center items-center px-8">
+        <LinearGradient 
+          colors={['#000000', '#2E1911']} 
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} 
+        />
         <MotiView 
           from={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white p-8 rounded-[32px] items-center shadow-lg shadow-black/5 w-full"
+          className="bg-black/40 p-8 rounded-[32px] items-center shadow-lg shadow-black/5 w-full border border-white/10"
+          style={{ backdropFilter: 'blur(10px)' }}
         >
-          <View className="bg-[#EFEBE9] w-20 h-20 rounded-full items-center justify-center mb-6">
-            <QrCode size={40} color="#8D6E63" />
+          <View className="bg-primary/10 w-20 h-20 rounded-full items-center justify-center mb-6">
+            <QrCode size={40} color="#C67C4E" />
           </View>
-          <Text className="text-2xl font-serif text-[#3E2723] mb-3 text-center">Camera Access</Text>
-          <Text className="text-[#8D6E63] text-center mb-8 font-sans leading-relaxed">
+          <Text className="text-2xl font-serif text-white mb-3 text-center">Camera Access</Text>
+          <Text className="text-white/70 text-center mb-8 font-sans leading-relaxed">
             We need your permission to show the camera so you can scan cafe QR codes.
           </Text>
           <TouchableOpacity 
-            className="bg-[#4A3428] w-full py-4 rounded-2xl flex-row justify-center items-center shadow-lg shadow-[#4A3428]/30"
+            className="bg-primary w-full py-4 rounded-2xl flex-row justify-center items-center shadow-lg shadow-primary/30"
             onPress={requestPermission}
           >
             <Text className="text-white font-bold text-lg tracking-wide">Grant Permission</Text>
@@ -40,7 +46,7 @@ export default function ScanScreen() {
             className="mt-6 py-2"
             onPress={() => router.back()}
           >
-            <Text className="text-[#8D6E63] font-bold">Go Back</Text>
+            <Text className="text-white/70 font-bold">Go Back</Text>
           </TouchableOpacity>
         </MotiView>
       </View>
@@ -49,17 +55,23 @@ export default function ScanScreen() {
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
+    console.log('[scan] QR scanned, raw data:', data);
     setScanned(true);
-    
+
     try {
       const payload = JSON.parse(data);
+      console.log('[scan] Parsed payload:', JSON.stringify(payload));
+
       if (payload.cafe_id) {
+        console.log('[scan] Navigating to cafe:', payload.cafe_id);
         router.push(`/cafe/${payload.cafe_id}`);
       } else {
+        console.warn('[scan] QR missing cafe_id');
         alert("Invalid Cafe QR code!");
         setTimeout(() => setScanned(false), 2000);
       }
     } catch (e) {
+      console.error('[scan] Failed to parse QR JSON:', e);
       alert("Invalid QR format");
       setTimeout(() => setScanned(false), 2000);
     }
@@ -102,7 +114,7 @@ export default function ScanScreen() {
               from={{ translateY: -130, opacity: 0 }}
               animate={{ translateY: 130, opacity: [0, 1, 1, 0] }}
               transition={{ loop: true, type: 'timing', duration: 2000 }}
-              className="w-full h-[2px] bg-[#4A3428] shadow-md shadow-[#4A3428]/80"
+              className="w-full h-[2px] bg-primary shadow-md shadow-primary/80"
             />
           </MotiView>
           <View className="bg-black/40 px-6 py-3 rounded-full mt-12 border border-white/10">

@@ -1,17 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/shared';
-import { Coffee, ArrowRight, AlertCircle } from 'lucide-react-native';
+import { Coffee, ArrowRight, AlertCircle, Eye, EyeOff } from '@/components/Icon';
 import { MotiView, AnimatePresence } from 'moti';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { CafePassLogo } from '@/components/CafePassLogo';
 
 export default function Login() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const isSmallDevice = height < 750;
   const setSession = useAuthStore((s) => s.setSession);
   
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,16 +63,20 @@ export default function Login() {
   const handleAuth = async () => {
     if (!validate()) return;
     setLoading(true);
+    console.log(`[customer-login] handleAuth called — action: ${isLogin ? 'login' : 'register'}, email: ${email}`);
 
     try {
       if (isLogin) {
         // Server-side authentication via Edge Function
+        console.log('[customer-login] Invoking auth edge function (login)...');
         const { data: res, error } = await supabase.functions.invoke('auth', {
           body: { action: 'login', email, password }
         });
-        
+        console.log('[customer-login] login response:', JSON.stringify({ error, resError: res?.error, hasSession: !!res?.data?.session }));
+
         if (error || res?.error) {
           const errMsg = error?.message || res?.error || '';
+          console.error('[customer-login] ❌ Login error:', errMsg);
           if (errMsg.includes('Invalid login credentials')) {
             setServerError('Incorrect email or password. Please try again.');
           } else {
@@ -73,17 +84,20 @@ export default function Login() {
           }
           return;
         }
-        
+
         if (res?.data?.session) {
+          console.log('[customer-login] Session received, setting session...');
           await supabase.auth.setSession({
             access_token: res.data.session.access_token,
             refresh_token: res.data.session.refresh_token
           });
           setSession(res.data.session);
+          console.log('[customer-login] ✅ Login successful');
         }
         router.replace('/');
       } else {
         // Server-side registration via Edge Function
+        console.log('[customer-login] Invoking auth edge function (register)...', { fullName, phone });
         const { data: res, error } = await supabase.functions.invoke('auth', {
           body: {
             action: 'register',
@@ -95,9 +109,11 @@ export default function Login() {
             }
           }
         });
-        
+        console.log('[customer-login] register response:', JSON.stringify({ error, resError: res?.error, hasSession: !!res?.data?.session, hasUser: !!res?.data?.user }));
+
         if (error || res?.error) {
           const errMsg = error?.message || res?.error || '';
+          console.error('[customer-login] ❌ Register error:', errMsg);
           if (errMsg.includes('already registered')) {
             setServerError('An account with this email already exists.');
           } else {
@@ -105,17 +121,20 @@ export default function Login() {
           }
           return;
         }
-        
+
         if (res?.data?.session) {
+          console.log('[customer-login] Session received, setting session...');
           await supabase.auth.setSession({
             access_token: res.data.session.access_token,
             refresh_token: res.data.session.refresh_token
           });
           setSession(res.data.session);
+          console.log('[customer-login] ✅ Register + login successful');
         }
         router.replace('/');
       }
     } catch (error: any) {
+      console.error('[customer-login] ❌ Unhandled error:', error.message);
       setServerError('An unexpected network error occurred.');
     } finally {
       setLoading(false);
@@ -131,27 +150,33 @@ export default function Login() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-      className="flex-1 bg-[#FAF6F0]"
+      className="flex-1 bg-black"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32 }}>
+      <LinearGradient 
+        colors={['#000000', '#2E1911']} 
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} 
+      />
+      <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: Math.max(insets.bottom, 10), paddingTop: Math.max(insets.top, 10) }}>
         <MotiView 
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ delay: 100 }}
-          className="items-center mb-10 mt-10"
+          className="items-center"
+          style={{ justifyContent: 'center', marginBottom: 16 }}
         >
-          <View className="bg-[#4A3428] w-24 h-24 rounded-[32px] items-center justify-center mb-6 shadow-xl shadow-[#4A3428]/30">
-            <Coffee size={48} color="#FFF" />
+          <View style={{ marginBottom: 6, alignItems: 'center', justifyContent: 'center' }}>
+            <CafePassLogo size={height * 0.16} />
           </View>
-          <Text className="text-5xl font-serif text-[#3E2723] tracking-tight">CafePass</Text>
-          <Text className="text-[#8D6E63] text-lg mt-2 font-sans tracking-wide">Your digital coffee companion</Text>
+          <Text className="font-serif text-white tracking-tight" style={{ fontSize: height * 0.04 }}>CafePass</Text>
+          {!isSmallDevice && <Text className="text-white/70 font-sans tracking-wide" style={{ fontSize: height * 0.02, marginTop: height * 0.005 }}>Your digital coffee companion</Text>}
         </MotiView>
 
         <MotiView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 200 }}
-          className="bg-white p-6 rounded-[32px] shadow-sm border border-[#EFEBE9]"
+          className="bg-black/40 shadow-lg border border-white/10 rounded-[32px]"
+          style={{ width: '90%', padding: '6%', paddingVertical: '8%', backdropFilter: 'blur(10px)' }}
         >
           
           <AnimatePresence>
@@ -170,69 +195,79 @@ export default function Login() {
 
           {!isLogin && (
             <>
-              <View className="mb-5">
-                <Text className="text-[#5D4037] text-sm font-bold ml-2 mb-1 uppercase tracking-wider">Full Name</Text>
+              <View style={{ marginBottom: height * 0.015 }}>
+                <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Full Name</Text>
                 <TextInput 
                   placeholder="John Doe"
-                  placeholderTextColor="#BCAAA4"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   value={fullName}
                   onChangeText={(val) => { setFullName(val); if (errors.fullName) setErrors({...errors, fullName: ''}) }}
-                  className={`bg-[#FAF6F0] px-5 py-4 rounded-2xl text-[#3E2723] font-sans text-base border ${errors.fullName ? 'border-red-400' : 'border-[#EFEBE9]'}`}
+                  className={`bg-zinc-800/80 px-4 rounded-xl text-white font-sans border ${errors.fullName ? 'border-red-500' : 'border-primary/20'}`}
+                  style={{ height: height * 0.06, fontSize: height * 0.018 }}
                 />
-                {errors.fullName && <Text className="text-red-500 text-xs mt-1 ml-2">{errors.fullName}</Text>}
+                {errors.fullName && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.fullName}</Text>}
               </View>
 
-              <View className="mb-5">
-                <Text className="text-[#5D4037] text-sm font-bold ml-2 mb-1 uppercase tracking-wider">Phone Number</Text>
+              <View style={{ marginBottom: height * 0.015 }}>
+                <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Phone Number</Text>
                 <TextInput 
                   placeholder="+1 234 567 8900"
-                  placeholderTextColor="#BCAAA4"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={(val) => { setPhone(val); if (errors.phone) setErrors({...errors, phone: ''}) }}
-                  className={`bg-[#FAF6F0] px-5 py-4 rounded-2xl text-[#3E2723] font-sans text-base border ${errors.phone ? 'border-red-400' : 'border-[#EFEBE9]'}`}
+                  className={`bg-zinc-800/80 px-4 rounded-xl text-white font-sans border ${errors.phone ? 'border-red-500' : 'border-primary/20'}`}
+                  style={{ height: height * 0.06, fontSize: height * 0.018 }}
                 />
-                {errors.phone && <Text className="text-red-500 text-xs mt-1 ml-2">{errors.phone}</Text>}
+                {errors.phone && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.phone}</Text>}
               </View>
             </>
           )}
 
-          <View className="mb-5">
-            <Text className="text-[#5D4037] text-sm font-bold ml-2 mb-1 uppercase tracking-wider">Email</Text>
+          <View style={{ marginBottom: height * 0.015 }}>
+            <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Email</Text>
             <TextInput 
               placeholder="hello@coffeelover.com"
-              placeholderTextColor="#BCAAA4"
+              placeholderTextColor="rgba(255, 255, 255, 0.3)"
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
               onChangeText={(val) => { setEmail(val); if (errors.email) setErrors({...errors, email: ''}) }}
-              className={`bg-[#FAF6F0] px-5 py-4 rounded-2xl text-[#3E2723] font-sans text-base border ${errors.email ? 'border-red-400' : 'border-[#EFEBE9]'}`}
+              className={`bg-zinc-800/80 px-4 rounded-xl text-white font-sans border ${errors.email ? 'border-red-500' : 'border-primary/20'}`}
+              style={{ height: height * 0.06, fontSize: height * 0.018 }}
             />
-            {errors.email && <Text className="text-red-500 text-xs mt-1 ml-2">{errors.email}</Text>}
+            {errors.email && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.email}</Text>}
           </View>
 
-          <View className="mb-8">
-            <Text className="text-[#5D4037] text-sm font-bold ml-2 mb-1 uppercase tracking-wider">Password</Text>
-            <TextInput 
-              placeholder="••••••••"
-              placeholderTextColor="#BCAAA4"
-              secureTextEntry
-              value={password}
-              onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
-              className={`bg-[#FAF6F0] px-5 py-4 rounded-2xl text-[#3E2723] font-sans text-base border ${errors.password ? 'border-red-400' : 'border-[#EFEBE9]'}`}
-            />
-            {errors.password && <Text className="text-red-500 text-xs mt-1 ml-2">{errors.password}</Text>}
+          <View style={{ marginBottom: height * 0.025 }}>
+            <Text className="text-white/70 font-bold ml-2 uppercase tracking-wider" style={{ fontSize: height * 0.012, marginBottom: height * 0.005 }}>Password</Text>
+            <View className={`bg-zinc-800/80 rounded-xl border ${errors.password ? 'border-red-500' : 'border-primary/20'} flex-row items-center pr-4`} style={{ height: height * 0.06 }}>
+              <TextInput 
+                placeholder="••••••••"
+                placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
+                className="flex-1 px-4 text-white font-sans h-full"
+                style={{ fontSize: height * 0.018 }}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                {showPassword ? <EyeOff size={height * 0.022} color="#C67C4E" /> : <Eye size={height * 0.022} color="#C67C4E" />}
+              </TouchableOpacity>
+            </View>
+            {errors.password && <Text className="text-red-400 text-xs mt-1 ml-2">{errors.password}</Text>}
           </View>
 
           <TouchableOpacity 
             disabled={loading}
-            className={`bg-[#4A3428] px-8 py-5 rounded-2xl flex-row items-center justify-center shadow-lg shadow-[#4A3428]/40 ${loading ? 'opacity-70' : ''}`}
+            className={`bg-primary border border-primary/50 px-6 rounded-xl flex-row items-center justify-center shadow-lg shadow-primary/20 ${loading ? 'opacity-70' : ''}`}
+            style={{ height: height * 0.065 }}
             onPress={handleAuth}
           >
-            <Text className="text-white font-bold text-lg mr-2">
+            <Text className="text-white font-bold mr-2 tracking-wide" style={{ fontSize: height * 0.02 }}>
               {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Text>
-            {!loading && <ArrowRight size={20} color="#FFF" />}
+            {!loading && <ArrowRight size={height * 0.025} color="#FFFFFF" />}
           </TouchableOpacity>
         </MotiView>
 
@@ -240,12 +275,13 @@ export default function Login() {
           from={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 300 }}
-          className="mt-8 mb-10 items-center"
+          className="items-center"
+          style={{ height: height * 0.1, justifyContent: 'center' }}
         >
           <TouchableOpacity onPress={resetForm}>
-            <Text className="text-[#8D6E63] font-sans text-base">
+            <Text className="text-white/70 font-sans" style={{ fontSize: height * 0.016 }}>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <Text className="text-[#4A3428] font-bold">{isLogin ? "Sign Up" : "Log In"}</Text>
+              <Text className="text-primary font-bold">{isLogin ? "Sign Up" : "Log In"}</Text>
             </Text>
           </TouchableOpacity>
         </MotiView>

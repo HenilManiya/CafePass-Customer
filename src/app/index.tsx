@@ -1,88 +1,124 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/shared';
 import { useAuthStore } from '@/store/authStore';
-import { QrCode, LogOut, MapPin, Coffee } from 'lucide-react-native';
+import { QrCode, LogOut, Coffee } from '@/components/Icon';
 import { MotiView } from 'moti';
+import { LinearGradient } from 'expo-linear-gradient';
+import { CafeHeader } from '@/components/CafeHeader';
+import { CafePassLogo } from '@/components/CafePassLogo';
 
 const { width } = Dimensions.get('window');
 
 export default function Home() {
   const router = useRouter();
-  const { session, signOut } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const { session, profile, signOut } = useAuthStore();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Time based greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchVisitedCafes();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     fetchVisitedCafes();
   }, []);
 
   const fetchVisitedCafes = async () => {
-    if (!session?.user) return;
-    
-    // Fetch user's digital cards along with cafe details
+    if (!session?.user) {
+      console.warn('[home] fetchVisitedCafes: no session, skipping');
+      return;
+    }
+    console.log('[home] Fetching digital cards for user:', session.user.id);
+
     const { data, error } = await supabase
       .from('digital_cards')
-      .select('*, cafes(name, address, image_url)')
-      .eq('customer_id', session.user.id);
-      
-    if (data) setCards(data);
+      .select('*, cafes(name, logo_url, image_url, max_punches, branch_name, location)')
+      .eq('customer_id', session.user.id)
+      .eq('is_completed', false);
+
+    if (error) {
+      console.error('[home] Failed to fetch digital cards:', error.message);
+    } else {
+      console.log('[home] Fetched', data?.length ?? 0, 'digital cards');
+      if (data) setCards(data);
+    }
     setLoading(false);
   };
 
   const renderCard = ({ item, index }: { item: any; index: number }) => {
-    const punches = item.punch_count;
-    const required = 10;
-    const progress = (punches / required) * 100;
+    const punches = item?.punch_count || 0;
+    const required = item?.cafes?.max_punches || 10;
+    const progress = Math.min(Math.max((punches / required) * 100, 0), 100);
+    const rewards = item?.rewards_available || 0;
 
     return (
-      <MotiView 
-        from={{ opacity: 0, translateY: 20 }}
+      <MotiView
+        from={{ opacity: 0, translateY: 30 }}
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ delay: index * 100 }}
+        className="mb-6 shadow-2xl"
       >
-        <TouchableOpacity 
-          className="bg-white rounded-[32px] shadow-sm mb-6 border border-[#EFEBE9] overflow-hidden"
-          onPress={() => router.push(`/cafe/${item.cafe_id}`)}
+        <TouchableOpacity
           activeOpacity={0.9}
+          onPress={() => router.push(`/cafe/${item.cafe_id}`)}
+          className="rounded-[32px] overflow-hidden border border-zinc-800 bg-zinc-900 relative shadow-lg"
         >
-          {/* Cafe Image Placeholder */}
-          <View className="h-40 bg-[#D7CCC8] w-full">
-            <Image 
-              source={{ uri: item.cafes?.image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80' }} 
-              className="w-full h-full opacity-90"
-              resizeMode="cover"
-            />
-            <View className="absolute inset-0 bg-black/30" />
-            <View className="absolute bottom-4 left-5 right-5 flex-row justify-between items-end">
-              <View>
-                <Text className="text-2xl font-bold text-white tracking-tight">{item.cafes?.name || 'Unknown Cafe'}</Text>
-                <View className="flex-row items-center mt-1">
-                  <MapPin size={14} color="#FFF" />
-                  <Text className="text-white/90 text-xs ml-1 font-medium">{item.cafes?.address || 'Downtown'}</Text>
+          {/* Cafe Image Background */}
+          <Image
+            source={{ uri: item.cafes?.image_url ? `${item.cafes.image_url}?t=${new Date().getTime()}` : 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80' }}
+            className="absolute inset-0 w-full h-full"
+            resizeMode="cover"
+          />
+          
+          <View className="w-full" style={{ backgroundColor: 'rgba(15,8,4,0.72)' }}>
+            <View className="p-6">
+              <View className="flex-row justify-between items-start mb-6">
+                <CafeHeader 
+                  variant="small" 
+                  cafeName={item.cafes?.name} 
+                  branchName={item.cafes?.branch_name} 
+                  logoUrl={item.cafes?.logo_url ? `${item.cafes.logo_url}?t=${new Date().getTime()}` : undefined} 
+                />
+
+                <View className="bg-white/20 px-3.5 py-1.5 rounded-full border border-white/10 items-center justify-center">
+                  <Text className="text-white font-bold text-base font-serif">{punches}<Text className="text-white/70 text-xs">/{required}</Text></Text>
                 </View>
               </View>
-              <View className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
-                <Text className="text-white font-bold text-sm">{punches}/{required}</Text>
-              </View>
-            </View>
-          </View>
 
-          {/* Progress Bar Area */}
-          <View className="p-5 bg-white">
-            <View className="flex-row justify-between mb-3">
-              <Text className="text-[#8D6E63] font-bold text-xs uppercase tracking-wider">Punch Progress</Text>
-              <Text className="text-[#4A3428] font-bold text-xs">{required - punches} more for a free drink!</Text>
-            </View>
-            <View className="h-4 w-full bg-[#EFEBE9] rounded-full overflow-hidden border border-[#D7CCC8]">
-              <MotiView 
-                className="h-full bg-[#4A3428] rounded-full"
-                from={{ width: '0%' }}
-                animate={{ width: `${progress}%` }}
-                transition={{ type: 'timing', duration: 1000 }}
-              />
+              {rewards > 0 && (
+                <View className="absolute top-6 right-20 bg-white/20 px-3 py-1 rounded-full shadow-lg border border-white/10">
+                  <Text className="text-white font-bold text-xs">🎁 {rewards}</Text>
+                </View>
+              )}
+
+              {/* Progress Bar Area */}
+              <View className="mt-2">
+                <View className="flex-row justify-between mb-3 items-end">
+                  <Text className="text-white/70 font-bold text-[10px] uppercase tracking-[0.1em]">Rewards Progress</Text>
+                  <Text className="text-primary font-bold text-xs italic">{required - punches} more for a free drink!</Text>
+                </View>
+                
+                <View className="h-3 w-full bg-white/10 rounded-full overflow-hidden border border-black/50">
+                  <MotiView
+                    className="h-full bg-primary rounded-full shadow-lg shadow-primary/40"
+                    style={{ width: `${progress}%` }}
+                    from={{ translateX: -300 }}
+                    animate={{ translateX: 0 }}
+                    transition={{ type: 'spring', damping: 14, delay: index * 100 + 300 }}
+                  />
+                </View>
+              </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -91,36 +127,50 @@ export default function Home() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FAF6F0]">
-      {/* Header */}
-      <View className="flex-row justify-between items-center px-6 pt-6 pb-4">
-        <View>
-          <Text className="text-[#8D6E63] text-sm uppercase tracking-widest font-bold mb-1">Welcome back</Text>
-          <Text className="text-4xl font-serif text-[#3E2723]">My Cards</Text>
+    <View className="flex-1 bg-black">
+      <LinearGradient 
+        colors={['#000000', '#2E1911']} 
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} 
+      />
+      <SafeAreaView className="flex-1">
+        {/* Header */}
+        <View className="flex-row justify-between items-end px-6 pt-8 pb-6 z-10 shadow-sm border-b border-white/5 bg-black/20">
+          <MotiView from={{ opacity: 0, translateX: -20 }} animate={{ opacity: 1, translateX: 0 }} className="flex-row items-center gap-3">
+            <CafePassLogo size={42} />
+            <View>
+              <Text className="text-primary text-[10px] uppercase tracking-[0.2em] font-bold mb-0.5">
+                {greeting}, {profile?.name || profile?.full_name || profile?.first_name || session?.user?.user_metadata?.name || session?.user?.user_metadata?.full_name || 'Coffee Lover'}
+              </Text>
+              <Text className="text-2xl font-serif text-white tracking-tight">Your Cards</Text>
+            </View>
+          </MotiView>
+          <MotiView from={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}>
+            <TouchableOpacity onPress={signOut} className="bg-primary/10 p-3 rounded-full shadow-md border border-primary/20">
+              <LogOut size={16} color="#C67C4E" />
+            </TouchableOpacity>
+          </MotiView>
         </View>
-        <TouchableOpacity onPress={signOut} className="bg-white p-3 rounded-full shadow-sm border border-[#EFEBE9]">
-          <LogOut size={22} color="#4A3428" />
-        </TouchableOpacity>
-      </View>
 
       <FlatList
         data={cards}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
         renderItem={renderCard}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 140 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           !loading ? (
-            <MotiView 
+            <MotiView
               from={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mt-20 items-center px-6"
             >
-              <View className="bg-[#EFEBE9] w-24 h-24 rounded-full items-center justify-center mb-6">
-                <Coffee size={40} color="#8D6E63" />
+              <View className="mb-4 items-center justify-center">
+                <CafePassLogo size={72} />
               </View>
-              <Text className="text-[#3E2723] text-2xl font-serif mb-2 text-center">No cards yet!</Text>
-              <Text className="text-[#8D6E63] text-center text-base font-sans px-4 leading-relaxed">
+              <Text className="text-white text-2xl font-serif mb-3 text-center">No cards yet!</Text>
+              <Text className="text-white/70 text-center text-[15px] font-sans px-4 leading-relaxed">
                 Visit a participating cafe and scan their QR code to grab your first digital punch card.
               </Text>
             </MotiView>
@@ -129,21 +179,34 @@ export default function Home() {
       />
 
       {/* Floating Action Button */}
-      <MotiView 
-        from={{ translateY: 100 }}
-        animate={{ translateY: 0 }}
-        transition={{ type: 'spring', damping: 15 }}
-        className="absolute bottom-10 inset-x-0 items-center px-6"
-      >
-        <TouchableOpacity
-          onPress={() => router.push('/scan')}
-          activeOpacity={0.8}
-          className="w-full bg-[#4A3428] flex-row items-center justify-center py-5 rounded-[24px] shadow-xl shadow-[#4A3428]/40 border border-[#3E2723]"
+      <View className="absolute bottom-0 left-0 right-0 items-center pointer-events-box-none" style={{ paddingBottom: Math.max(insets.bottom + 16, 32) }} pointerEvents="box-none">
+        <MotiView
+          from={{ translateY: 100, opacity: 0 }}
+          animate={{ translateY: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 15, delay: 400 }}
         >
-          <QrCode color="white" size={24} className="mr-3" />
-          <Text className="text-white font-bold text-lg tracking-wide">Scan New Cafe QR</Text>
-        </TouchableOpacity>
-      </MotiView>
-    </SafeAreaView>
+          <TouchableOpacity
+            onPress={() => router.push('/scan')}
+            activeOpacity={0.8}
+            className="relative"
+          >
+            {/* Subtle pulse effect */}
+            <MotiView
+              from={{ opacity: 0.5, scale: 1 }}
+              animate={{ opacity: 0, scale: 1.2 }}
+              transition={{ loop: true, type: 'timing', duration: 2000 }}
+              className="absolute inset-0 bg-primary/20 rounded-full"
+            />
+            
+            {/* Proper High-End FAB */}
+            <View className="bg-primary flex-row items-center justify-center px-6 py-4 rounded-full shadow-xl shadow-primary/30 border border-primary/10">
+              <QrCode color="white" size={20} />
+              <Text className="text-white font-sans font-bold text-[15px] tracking-wide ml-3">Scan QR</Text>
+            </View>
+          </TouchableOpacity>
+        </MotiView>
+      </View>
+      </SafeAreaView>
+    </View>
   );
 }
