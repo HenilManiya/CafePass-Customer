@@ -17,7 +17,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         <Text style={[styles.tabText, { color: currentRoute === 'index' ? Colors.dark.primary : 'white' }]}>Cards</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/scan')} style={styles.centerScannerButton}>
+      <TouchableOpacity onPress={() => navigation.navigate('scan')} style={styles.centerScannerButton}>
         <View style={styles.scannerCircle}>
           <Scan size={26} color={Colors.dark.dark} />
         </View>
@@ -36,6 +36,7 @@ export default function TabLayout() {
   return (
     <Tabs tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" />
+      <Tabs.Screen name="scan" />
       <Tabs.Screen name="profile" />
     </Tabs>
   );

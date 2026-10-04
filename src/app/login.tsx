@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,8 +11,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/shared';
-import { Coffee, ArrowRight, AlertCircle, Eye, EyeOff } from '@/components/Icon';
+import { Coffee, ArrowRight, AlertCircle } from '@/components/Icon';
 import { AnimatedView as MotiView, AnimatePresence } from '@/components/ui/AnimatedView';
+import { Input, PasswordInput } from '@/components/ui/Input';
 
 import { CafePassLogo } from '@/components/CafePassLogo';
 import { useAuth } from '@/context/AuthContext';
@@ -187,84 +187,49 @@ export default function Login() {
 
           {!isLogin && (
             <MotiView
-              from={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
               style={styles.fieldGroup}
             >
-              <Text style={styles.inputLabel}>Full Name</Text>
-              <TextInput 
+              <Input
+                id="login-fullname"
+                label="Full Name"
                 placeholder="John Doe"
-                placeholderTextColor={Colors.dark.muted}
                 value={fullName}
                 onChangeText={setFullName}
-                style={[
-                  styles.input,
-                  errors.fullName ? styles.inputErrorBorder : styles.inputNormalBorder,
-                ]}
+                error={errors.fullName}
               />
-              {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
               
-              <Text style={[styles.inputLabel, { marginTop: 12 }]}>Phone Number</Text>
-              <TextInput 
+              <Input
+                id="login-phone"
+                label="Phone Number"
                 placeholder="+1 234 567 8900"
-                placeholderTextColor={Colors.dark.muted}
                 value={phone}
                 onChangeText={setPhone}
-                style={[
-                  styles.input,
-                  errors.phone ? styles.inputErrorBorder : styles.inputNormalBorder,
-                ]}
+                error={errors.phone}
               />
-              {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
             </MotiView>
           )}
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <TextInput 
-              placeholder="coffee@lover.com"
-              placeholderTextColor={Colors.dark.muted}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              style={[
-                styles.input,
-                errors.email ? styles.inputErrorBorder : styles.inputNormalBorder,
-              ]}
-            />
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-          </View>
+          <Input
+            id="login-email"
+            label="Email"
+            placeholder="coffee@lover.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            error={errors.email}
+          />
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View
-              style={[
-                styles.passwordContainer,
-                errors.password ? styles.inputErrorBorder : styles.inputNormalBorder,
-              ]}
-            >
-              <TextInput 
-                placeholder="Enter your password"
-                placeholderTextColor={Colors.dark.muted}
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-                style={styles.passwordInput}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                {showPassword ? (
-                  <EyeOff size={18} color={Colors.dark.muted} />
-                ) : (
-                  <Eye size={18} color={Colors.dark.muted} />
-                )}
-              </TouchableOpacity>
-            </View>
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-          </View>
+          <PasswordInput
+            id="login-password"
+            label="Password"
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={setPassword}
+            error={errors.password}
+          />
 
           <TouchableOpacity 
             disabled={loading}
@@ -367,57 +332,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   fieldGroup: {
-    marginBottom: 14,
-  },
-  inputLabel: {
-    color: Colors.dark.muted,
-    fontWeight: 'bold',
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  input: {
-    backgroundColor: Colors.dark.dark,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    color: Colors.dark.text,
-    height: 48,
-    fontSize: 14,
-  },
-  inputNormalBorder: {
-    borderWidth: 1,
-    borderColor: Colors.dark.borderSubtle,
-  },
-  inputErrorBorder: {
-    borderWidth: 1,
-    borderColor: Colors.dark.errorBorderStrong,
-  },
-  passwordContainer: {
-    backgroundColor: Colors.dark.dark,
-    borderRadius: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 14,
-    height: 48,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 14,
-    color: Colors.dark.text,
-    height: '100%',
-    fontSize: 14,
-  },
-  errorText: {
-    color: Colors.dark.error,
-    fontSize: 11,
-    marginTop: 4,
-    marginLeft: 4,
+    marginBottom: 0,
   },
   primaryButton: {
     backgroundColor: Colors.dark.primary,
-    height: 48,
+    minHeight: 48,
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',

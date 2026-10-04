@@ -17,7 +17,7 @@ export const Colors = {
     background: '#000000',
     cardBackground: '#18181b',
     modalBackground: 'rgba(20,10,5,0.85)',
-    headerBackground: 'rgba(0,0,0,0.2)',
+    headerBackground: '#000000',
     inputBackground: 'rgba(39, 39, 42, 0.8)',
     cardOverlay: 'rgba(15,8,4,0.72)',
 

@@ -20,11 +20,11 @@ export function HomeHeader({ title, userName, onSignOut }: HomeHeaderProps) {
     <View style={styles.header}>
       <MotiView from={{ opacity: 0, translateX: -20 }} animate={{ opacity: 1, translateX: 0 }} style={styles.headerLeft}>
         <CafePassLogo size={42} />
-        <View>
-          <Text style={styles.greetingText}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.greetingText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {greeting}, {userName}
           </Text>
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{title}</Text>
         </View>
       </MotiView>
       <MotiView from={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}>
@@ -51,6 +51,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    marginRight: 12,
   },
   greetingText: {
     color: Colors.dark.primary,

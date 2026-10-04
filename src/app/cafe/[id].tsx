@@ -204,6 +204,7 @@ export default function CafeCardScreen() {
             } else if (eventType === 'UPDATE' && newRec.status !== 'AVAILABLE') {
               setRewardsAvailable((prev) => Math.max(0, prev - 1));
             }
+            setIsQRModalVisible(false);
           }
         }
       )

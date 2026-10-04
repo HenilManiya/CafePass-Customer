@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from '@/components/Icon';
+import { HomeHeader } from '@/components/ui/HomeHeader';
+import { useAuthStore } from '@/context/AuthContext';
 import { CameraPermissionView } from '@/components/scanner/CameraPermissionView';
 import { ScanFrame } from '@/components/scanner/ScanFrame';
 import { Colors } from '@/constants/Colors';
@@ -14,6 +16,8 @@ export default function ScanScreen() {
   const [scanned, setScanned] = useState(false);
   const router = useRouter();
   const [dialog, setDialog] = useState<DialogState>(defaultDialogState);
+  const { session, profile, signOut } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   if (!permission) {
     return <View style={styles.container} />;
@@ -54,21 +58,16 @@ export default function ScanScreen() {
         style={styles.camera}
       />
       
-      <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
-        <View style={styles.header} pointerEvents="box-none">
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            style={styles.closeButton}
-          >
-            <X color="white" size={24} />
-          </TouchableOpacity>
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>Scan Cafe QR</Text>
-          </View>
-          <View style={styles.headerSpacer} />
+      <View style={styles.safeArea} pointerEvents="box-none">
+        <View style={{ backgroundColor: Colors.dark.headerBackground, paddingTop: insets.top }}>
+          <HomeHeader
+            title="Scan Cafe QR"
+            userName={profile?.name || session?.user?.user_metadata?.name || session?.user?.user_metadata?.full_name || 'Coffee Lover'}
+            onSignOut={signOut}
+          />
         </View>
         <ScanFrame />
-      </SafeAreaView>
+      </View>
       <DialogModal dialog={dialog} setDialog={setDialog} />
     </View>
   );

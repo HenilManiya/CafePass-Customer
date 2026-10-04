@@ -13,8 +13,8 @@ export function ErrorAlert({ error }: ErrorAlertProps) {
     <AnimatePresence>
       {error ? (
         <MotiView 
-          from={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          from={{ opacity: 0, translateY: -10 }}
+          animate={{ opacity: 1, translateY: 0 }}
           exit={{ opacity: 0, height: 0 }}
           style={styles.errorAlert}
         >

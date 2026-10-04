@@ -49,7 +49,8 @@ export function CafeHeader({
             isLarge ? styles.titleTextLarge : styles.titleTextSmall
           ]}
           numberOfLines={1}
-          adjustsFontSizeToFit={isLarge}
+          adjustsFontSizeToFit={true}
+          minimumFontScale={0.5}
         >
           {cafeName}
         </Text>
@@ -63,6 +64,8 @@ export function CafeHeader({
                 isLarge ? styles.branchTextLarge : styles.branchTextSmall
               ]}
               numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.5}
             >
               {branchName.toLowerCase().includes('branch') ? branchName : `${branchName} Branch`}
             </Text>
