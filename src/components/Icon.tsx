@@ -154,3 +154,19 @@ export const Info = icon(() => (
     <Line x1="12" y1="8" x2="12.01" y2="8" />
   </>
 ));
+
+export const User = icon(() => (
+  <>
+    <Path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+    <Circle cx="12" cy="7" r="4" />
+  </>
+));
+
+export const Scan = icon(() => (
+  <>
+    <Path d="M3 7V5a2 2 0 0 1 2-2h2" />
+    <Path d="M17 3h2a2 2 0 0 1 2 2v2" />
+    <Path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+    <Path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+  </>
+));

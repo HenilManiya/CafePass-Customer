@@ -10,7 +10,8 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!initialized) return;
 
-    const inAuthGroup = segments[0] === 'login';
+    const segment = segments[0] as string | undefined;
+    const inAuthGroup = segment === 'login' || segment === 'signup';
 
     if (!session && !inAuthGroup) {
       // Redirect to login if unauthenticated and trying to access app
@@ -23,7 +24,15 @@ function RootLayoutNav() {
 
   if (!initialized) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="signup" options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="scan" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="cafe/[id]" options={{ headerShown: false }} />
+    </Stack>
+  );
 }
 
 export default function Layout() {

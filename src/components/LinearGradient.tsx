@@ -58,7 +58,7 @@ export function LinearGradient({
   const gradientId = idRef.current;
 
   return (
-    <View style={[styles.container, style]} pointerEvents="none" {...rest}>
+    <View style={[styles.container, style]} pointerEvents={rest.pointerEvents || (children ? 'auto' : 'none')} {...rest}>
       <Svg height="100%" width="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
         <Defs>
           <SvgLinearGradient

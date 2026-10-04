@@ -1,43 +1,51 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from 'react-native';
-import { Eye, EyeOff } from '@/components/Icon';
 import { Colors } from '@/constants/Colors';
+import { Eye, EyeOff } from '@/components/Icon';
 
-interface AuthPasswordInputProps extends TextInputProps {
+interface InputProps extends TextInputProps {
   label: string;
   error?: string;
-  isLogin?: boolean;
+  isPassword?: boolean;
 }
 
-export function AuthPasswordInput({ label, error, isLogin = true, style, ...props }: AuthPasswordInputProps) {
+export function Input({ label, error, isPassword = false, style, ...props }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <View style={{ marginBottom: isLogin ? 16 : 10 }}>
+    <View style={styles.container}>
       <Text style={styles.inputLabel}>{label}</Text>
       <View 
         style={[
-          styles.passwordContainer,
-          { height: isLogin ? 48 : 40 },
+          styles.inputContainer,
           error ? styles.inputErrorBorder : styles.inputNormalBorder,
         ]}
       >
         <TextInput 
           placeholderTextColor={Colors.dark.placeholder}
-          secureTextEntry={!showPassword}
-          style={[styles.passwordInput, { fontSize: isLogin ? 15 : 13 }, style]}
+          secureTextEntry={isPassword && !showPassword}
+          style={[styles.inputField, style]}
           {...props}
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          {showPassword ? <EyeOff size={18} color={Colors.dark.primary} /> : <Eye size={18} color={Colors.dark.primary} />}
-        </TouchableOpacity>
+        {isPassword && (
+          <TouchableOpacity 
+            onPress={() => setShowPassword(!showPassword)} 
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.eyeIcon}
+          >
+            {showPassword ? <EyeOff size={18} color={Colors.dark.primary} /> : <Eye size={18} color={Colors.dark.primary} />}
+          </TouchableOpacity>
+        )}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: 16,
+  },
   inputLabel: {
     color: Colors.dark.textSecondary,
     fontWeight: 'bold',
@@ -45,20 +53,28 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     fontSize: 10,
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  passwordContainer: {
+  inputContainer: {
     backgroundColor: Colors.dark.inputBackground,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 14,
+    height: 48,
     borderWidth: 1,
+    overflow: 'hidden',
   },
-  passwordInput: {
+  inputField: {
     flex: 1,
     paddingHorizontal: 14,
     color: Colors.dark.text,
+    fontSize: 15,
+    height: '100%',
+  },
+  eyeIcon: {
+    paddingRight: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
     height: '100%',
   },
   inputNormalBorder: {
@@ -70,7 +86,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: Colors.dark.error,
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
     marginLeft: 4,
   },
 });

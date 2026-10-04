@@ -24,9 +24,6 @@ export default function CafeCardScreen() {
   const { session } = useAuthStore();
   const router = useRouter();
 
-  const [qrToken, setQrToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [card, setCard] = useState<any>(null);
   const [cafeDetails, setCafeDetails] = useState<any>(null);
   const [rewardsAvailable, setRewardsAvailable] = useState(0);
@@ -104,36 +101,6 @@ export default function CafeCardScreen() {
     }
   }, [id, session]);
 
-  const fetchQRToken = useCallback(async (isManual = false) => {
-    if (!id || !session) return;
-    console.log(`[cafe-card] Fetching QR token for cafe: ${id} (manual: ${isManual})`);
-
-    if (!isManual) setLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('refresh-qr', {
-        body: { cafe_id: id },
-      });
-
-      if (fnError) {
-        console.error('[cafe-card] refresh-qr error:', fnError.message);
-        throw fnError;
-      }
-      if (data?.error) {
-        console.error('[cafe-card] refresh-qr returned error:', data.error);
-        throw new Error(data.error);
-      }
-
-      console.log('[cafe-card] ✅ Got JWT token, sessionId:', data?.sessionId, 'expiresAt:', data?.expiresAt);
-      setQrToken(data.token);
-    } catch (e: any) {
-      setError(e.message || 'Failed to generate QR. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [id, session]);
-
   useEffect(() => {
     fetchCardDetails();
   }, []);
@@ -141,7 +108,6 @@ export default function CafeCardScreen() {
 
   const handleOpenQR = () => {
     setIsQRModalVisible(true);
-    fetchQRToken(false);
   };
 
   const userId = session?.user?.id;
@@ -381,10 +347,7 @@ export default function CafeCardScreen() {
         <QRModal
           isVisible={isQRModalVisible}
           onClose={() => setIsQRModalVisible(false)}
-          loading={loading}
-          error={error}
-          qrToken={qrToken}
-          onRetry={() => fetchQRToken(true)}
+          cafeId={id}
           cafeLogo={cafeDetails?.logo_url}
         />
         <ConfettiBurst visible={showConfetti} />

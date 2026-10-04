@@ -1,30 +1,36 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
+  StyleSheet,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/context/AuthContext';
 import { supabase } from '@/shared';
-import { Coffee } from '@/components/Icon';
-import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from '@/components/LinearGradient';
+import { Coffee, ArrowRight, AlertCircle, Eye, EyeOff } from '@/components/Icon';
+import { AnimatedView as MotiView, AnimatePresence } from '@/components/ui/AnimatedView';
+
 import { CafePassLogo } from '@/components/CafePassLogo';
-import { AuthInput } from '@/components/ui/AuthInput';
-import { AuthPasswordInput } from '@/components/ui/AuthPasswordInput';
-import { AuthButton } from '@/components/ui/AuthButton';
-import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useAuth } from '@/context/AuthContext';
+import { LinearGradient } from '@/components/LinearGradient';
+
 import { Colors } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 
 export default function Login() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
-  const isSmallDevice = height < 750;
-  const setSession = useAuthStore((s) => s.setSession);
+  const { setSession } = useAuth();
   
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  const { height, width } = useWindowDimensions();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,28 +44,15 @@ export default function Login() {
     const newErrors: Record<string, string> = {};
     setServerError('');
     
-    // Client-side Validation Rules
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
+    if (!email.trim()) newErrors.email = 'Email is required';
+    else if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = 'Valid email required';
     
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 6) newErrors.password = 'Min 6 characters';
     
     if (!isLogin) {
-      if (!fullName.trim()) {
-        newErrors.fullName = 'Full name is required';
-      }
-      if (!phone.trim()) {
-        newErrors.phone = 'Phone number is required';
-      } else if (!/^\+?[\d\s-]{8,}$/.test(phone)) {
-        newErrors.phone = 'Please enter a valid phone number';
-      }
+      if (!fullName.trim()) newErrors.fullName = 'Full Name is required';
+      if (!phone.trim()) newErrors.phone = 'Phone is required';
     }
     
     setErrors(newErrors);
@@ -69,79 +62,67 @@ export default function Login() {
   const handleAuth = async () => {
     if (!validate()) return;
     setLoading(true);
-    console.log(`[customer-login] handleAuth called — action: ${isLogin ? 'login' : 'register'}, email: ${email}`);
+    console.log(`[cafe-login] handleAuth called â€” action: ${isLogin ? 'login' : 'register'}, email: ${email}`);
 
     try {
       if (isLogin) {
-        // Server-side authentication via Edge Function
-        console.log('[customer-login] Invoking auth edge function (login)...');
+        console.log('[cafe-login] Invoking auth edge function (login)...');
         const { data: res, error } = await supabase.functions.invoke('auth', {
           body: { action: 'login', email, password, appType: 'customer' }
         });
         console.log('[customer-login] login response:', JSON.stringify({ error, resError: res?.error, hasSession: !!res?.data?.session }));
-
-        if (error || res?.error) {
-          const errMsg = error?.message || res?.error || '';
-          console.error('[customer-login] ❌ Login error:', errMsg);
-          if (errMsg.includes('Invalid login credentials')) {
-            setServerError('Incorrect email or password. Please try again.');
-          } else {
-            setServerError(errMsg);
-          }
-          return;
-        }
-
+        if (error) throw error;
+        if (res?.error) throw new Error(res.error);
         if (res?.data?.session) {
-          console.log('[customer-login] Session received, setting session...');
+          console.log('[cafe-login] Session received, setting session...');
           await supabase.auth.setSession({
             access_token: res.data.session.access_token,
             refresh_token: res.data.session.refresh_token
           });
           setSession(res.data.session);
-          console.log('[customer-login] ✅ Login successful');
+          router.replace('/');
+          console.log('[cafe-login] âœ… Login successful');
         }
-        router.replace('/');
       } else {
-        // Server-side registration via Edge Function
-        console.log('[customer-login] Invoking auth edge function (register)...', { fullName, phone });
-        const { data: res, error } = await supabase.functions.invoke('auth', {
-          body: {
-            action: 'register',
-            email,
-            password,
-            metadata: {
-              full_name: fullName,
-              phone: phone,
-            }
+        const registerBody = {
+          action: 'register',
+          email,
+          password,
+          metadata: {
+            full_name: fullName,
+            phone: phone,
           }
+        };
+        console.log('[customer-login] Invoking auth edge function (register)...', JSON.stringify({ action: 'register', email }));
+        const { data: res, error } = await supabase.functions.invoke('auth', {
+          body: registerBody
         });
         console.log('[customer-login] register response:', JSON.stringify({ error, resError: res?.error, hasSession: !!res?.data?.session, hasUser: !!res?.data?.user }));
-
-        if (error || res?.error) {
-          const errMsg = error?.message || res?.error || '';
-          console.error('[customer-login] ❌ Register error:', errMsg);
-          if (errMsg.includes('already registered')) {
-            setServerError('An account with this email already exists.');
-          } else {
-            setServerError(errMsg);
+          if (error) throw error;
+          if (res?.error) throw new Error(res.error);
+          if (res?.data?.session) {
+            console.log('[cafe-login] Session received, setting session...');
+            await supabase.auth.setSession({
+              access_token: res.data.session.access_token,
+              refresh_token: res.data.session.refresh_token
+            });
+            setSession(res.data.session);
+            router.replace('/');
+            console.log('[cafe-login] âœ… Register + login successful');
+          } else if (res?.data?.user) {
+            console.log('[cafe-login] No session (email confirmation ON), attempting auto-login...');
+            const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+            if (loginError) throw loginError;
+            if (loginData?.session) {
+              setSession(loginData.session);
+              router.replace('/');
+            }
+            console.log('[cafe-login] âœ… Auto-login successful');
           }
-          return;
-        }
-
-        if (res?.data?.session) {
-          console.log('[customer-login] Session received, setting session...');
-          await supabase.auth.setSession({
-            access_token: res.data.session.access_token,
-            refresh_token: res.data.session.refresh_token
-          });
-          setSession(res.data.session);
-          console.log('[customer-login] ✅ Register + login successful');
-        }
-        router.replace('/');
       }
     } catch (error: any) {
-      console.error('[customer-login] ❌ Unhandled error:', error.message);
-      setServerError('An unexpected network error occurred.');
+      console.error('[cafe-login] âŒ Error:', error.message);
+      setServerError(error.message);
     } finally {
       setLoading(false);
     }
@@ -154,101 +135,153 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'android' ? 30 : 0}
       style={styles.keyboardContainer}
     >
-      <LinearGradient 
-        colors={[Colors.dark.background, Colors.dark.hex_2e1911]} 
-        style={StyleSheet.absoluteFill} 
+      <LinearGradient
+        colors={[Colors.dark.background, Colors.dark.hex_2e1911]}
+        style={StyleSheet.absoluteFill}
       />
-      <ScrollView 
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingBottom: Math.max(insets.bottom, 12), 
-            paddingTop: Math.max(insets.top, 12),
-          }
-        ]}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
       >
-        <MotiView 
+        <MotiView
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 100 }}
-          style={[styles.headerContainer, { marginBottom: isLogin ? 16 : 8 }]}
+          style={styles.headerContainer}
         >
           <View style={styles.logoWrapper}>
             <CafePassLogo size={Math.min(height * 0.1, 74)} />
           </View>
-          <Text style={[styles.appName, { fontSize: 26 }]}>CafePass</Text>
-          <Text style={[styles.appSubtitle, { fontSize: 13 }]}>
-            {isLogin ? 'Your digital coffee companion' : 'Create your digital pass'}
+          <Text style={[styles.appName, { fontSize: 26 }]}>
+            CafePass
+          </Text>
+          <Text style={styles.appSubtitle}>
+            Your digital coffee companion
           </Text>
         </MotiView>
 
         <MotiView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 200 }}
-          style={[styles.card, { paddingVertical: isLogin ? 22 : 14 }]}
+          style={styles.card}
         >
-          <ErrorAlert error={serverError} />
+          <AnimatePresence>
+            {serverError ? (
+              <MotiView
+                from={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={styles.errorAlert}
+              >
+                <AlertCircle size={18} color={Colors.dark.error} />
+                <Text style={styles.errorAlertText}>{serverError}</Text>
+              </MotiView>
+            ) : null}
+          </AnimatePresence>
 
           {!isLogin && (
-            <>
-              <AuthInput
-                label="Full Name"
+            <MotiView
+              from={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              style={styles.fieldGroup}
+            >
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput 
                 placeholder="John Doe"
+                placeholderTextColor={Colors.dark.muted}
                 value={fullName}
-                onChangeText={(val) => { setFullName(val); if (errors.fullName) setErrors({...errors, fullName: ''}) }}
-                error={errors.fullName}
-                isLogin={isLogin}
+                onChangeText={setFullName}
+                style={[
+                  styles.input,
+                  errors.fullName ? styles.inputErrorBorder : styles.inputNormalBorder,
+                ]}
               />
-
-              <AuthInput
-                label="Phone Number"
+              {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
+              
+              <Text style={[styles.inputLabel, { marginTop: 12 }]}>Phone Number</Text>
+              <TextInput 
                 placeholder="+1 234 567 8900"
-                keyboardType="phone-pad"
+                placeholderTextColor={Colors.dark.muted}
                 value={phone}
-                onChangeText={(val) => { setPhone(val); if (errors.phone) setErrors({...errors, phone: ''}) }}
-                error={errors.phone}
-                isLogin={isLogin}
+                onChangeText={setPhone}
+                style={[
+                  styles.input,
+                  errors.phone ? styles.inputErrorBorder : styles.inputNormalBorder,
+                ]}
               />
-            </>
+              {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+            </MotiView>
           )}
 
-          <AuthInput
-            label="Email"
-            placeholder="hello@coffeelover.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={(val) => { setEmail(val); if (errors.email) setErrors({...errors, email: ''}) }}
-            error={errors.email}
-            isLogin={isLogin}
-          />
+          <View style={styles.fieldGroup}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput 
+              placeholder="coffee@lover.com"
+              placeholderTextColor={Colors.dark.muted}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              style={[
+                styles.input,
+                errors.email ? styles.inputErrorBorder : styles.inputNormalBorder,
+              ]}
+            />
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          </View>
 
-          <AuthPasswordInput
-            label="Password"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={(val) => { setPassword(val); if (errors.password) setErrors({...errors, password: ''}) }}
-            error={errors.password}
-            isLogin={isLogin}
-          />
+          <View style={styles.fieldGroup}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View
+              style={[
+                styles.passwordContainer,
+                errors.password ? styles.inputErrorBorder : styles.inputNormalBorder,
+              ]}
+            >
+              <TextInput 
+                placeholder="Enter your password"
+                placeholderTextColor={Colors.dark.muted}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                style={styles.passwordInput}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                {showPassword ? (
+                  <EyeOff size={18} color={Colors.dark.muted} />
+                ) : (
+                  <Eye size={18} color={Colors.dark.muted} />
+                )}
+              </TouchableOpacity>
+            </View>
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          </View>
 
-          <AuthButton
-            title={loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
-            loading={loading}
-            isLogin={isLogin}
+          <TouchableOpacity 
+            disabled={loading}
+            style={[
+              styles.primaryButton,
+              loading && styles.buttonDisabled
+            ]}
             onPress={handleAuth}
-          />
+          >
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+            </Text>
+            {!loading && <ArrowRight size={18} color={Colors.dark.dark} />}
+          </TouchableOpacity>
         </MotiView>
 
-        <MotiView 
+        <MotiView
           from={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 300 }}
@@ -256,7 +289,7 @@ export default function Login() {
         >
           <TouchableOpacity onPress={resetForm} style={styles.switchButton}>
             <Text style={styles.switchText}>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              {isLogin ? "Don't have an account? " : "Already registered? "}
               <Text style={styles.switchHighlight}>{isLogin ? "Sign Up" : "Log In"}</Text>
             </Text>
           </TouchableOpacity>
@@ -273,16 +306,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 24,
     paddingHorizontal: 16,
   },
   headerContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 20,
   },
   logoWrapper: {
-    marginBottom: 4,
+    marginBottom: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -290,37 +324,130 @@ const styles = StyleSheet.create({
     fontFamily: Typography.serif,
     color: Colors.dark.text,
     letterSpacing: -0.5,
+    fontWeight: 'bold',
+  },
+  primaryText: {
+    color: Colors.dark.primary,
   },
   appSubtitle: {
     color: Colors.dark.textSecondary,
-    letterSpacing: 0.5,
-    marginTop: 2,
+    letterSpacing: 0.3,
+    fontSize: 13,
+    marginTop: 4,
   },
   card: {
-    backgroundColor: Colors.dark.overlay,
-    borderRadius: 28,
-    paddingHorizontal: 18,
+    backgroundColor: Colors.dark.hex_26140b,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
     borderWidth: 1,
-    borderColor: Colors.dark.border,
-    width: '92%',
+    borderColor: Colors.dark.borderSubtle,
+    width: '100%',
     maxWidth: 400,
     shadowColor: Colors.dark.background,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
     elevation: 8,
+  },
+  errorAlert: {
+    backgroundColor: Colors.dark.errorBackground,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.dark.errorBorder,
+  },
+  errorAlertText: {
+    color: Colors.dark.hex_fecaca,
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 13,
+  },
+  fieldGroup: {
+    marginBottom: 14,
+  },
+  inputLabel: {
+    color: Colors.dark.muted,
+    fontWeight: 'bold',
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  input: {
+    backgroundColor: Colors.dark.dark,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    color: Colors.dark.text,
+    height: 48,
+    fontSize: 14,
+  },
+  inputNormalBorder: {
+    borderWidth: 1,
+    borderColor: Colors.dark.borderSubtle,
+  },
+  inputErrorBorder: {
+    borderWidth: 1,
+    borderColor: Colors.dark.errorBorderStrong,
+  },
+  passwordContainer: {
+    backgroundColor: Colors.dark.dark,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 14,
+    height: 48,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 14,
+    color: Colors.dark.text,
+    height: '100%',
+    fontSize: 14,
+  },
+  errorText: {
+    color: Colors.dark.error,
+    fontSize: 11,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  primaryButton: {
+    backgroundColor: Colors.dark.primary,
+    height: 48,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    shadowColor: Colors.dark.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    color: Colors.dark.dark,
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginRight: 8,
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 12,
+    marginTop: 18,
   },
   switchButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
+    padding: 8,
   },
   switchText: {
-    color: Colors.dark.textSecondary,
-    fontSize: 12,
+    color: Colors.dark.muted,
+    fontSize: 13,
   },
   switchHighlight: {
     color: Colors.dark.primary,

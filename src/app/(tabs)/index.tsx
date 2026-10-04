@@ -9,7 +9,6 @@ import { LinearGradient } from '@/components/LinearGradient';
 import { HomeHeader } from '@/components/ui/HomeHeader';
 import { DigitalCard } from '@/components/cards/DigitalCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import { Colors } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 
@@ -75,8 +74,6 @@ export default function Home() {
           onRefresh={onRefresh}
           ListEmptyComponent={!loading ? <EmptyState /> : null}
         />
-
-        <FloatingActionButton />
       </SafeAreaView>
     </View>
   );

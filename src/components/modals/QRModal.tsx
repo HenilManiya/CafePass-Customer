@@ -5,32 +5,64 @@ import { X, RefreshCw } from '@/components/Icon';
 import { Colors } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 
+import { supabase } from '@/shared';
+
 const { width } = Dimensions.get('window');
 
 interface QRModalProps {
   isVisible: boolean;
   onClose: () => void;
-  loading: boolean;
-  error: string | null;
-  qrToken: string | null;
-  onRetry: () => void;
+  cafeId: string | null;
   cafeLogo?: string;
 }
 
 export function QRModal({
   isVisible,
   onClose,
-  loading,
-  error,
-  qrToken,
-  onRetry,
+  cafeId,
   cafeLogo
 }: QRModalProps) {
+  const [qrToken, setQrToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(600)).current;
   const qrOpacity = useRef(new Animated.Value(0)).current;
   const qrScale = useRef(new Animated.Value(0.95)).current;
   const [render, setRender] = useState(isVisible);
+
+  const fetchQRToken = async (id: string, isManual = false) => {
+    if (!isManual) setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('refresh-qr', {
+        body: { cafe_id: id },
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+
+      setQrToken(data.token);
+    } catch (e: any) {
+      setError(e.message || 'Failed to generate QR. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isVisible && cafeId) {
+      fetchQRToken(cafeId, false);
+    } else if (!isVisible) {
+      setQrToken(null);
+    }
+  }, [isVisible, cafeId]);
+
+  const onRetry = () => {
+    if (cafeId) fetchQRToken(cafeId, true);
+  };
 
   useEffect(() => {
     if (isVisible) {

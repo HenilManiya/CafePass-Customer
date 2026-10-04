@@ -42,9 +42,11 @@ export const Colors = {
     error: '#F87171',
     errorBackground: 'rgba(127, 29, 29, 0.4)',
     errorBorder: 'rgba(239, 68, 68, 0.3)',
+    errorBorderStrong: 'rgba(239, 68, 68, 0.8)',
 
     // Unique hex colors
     hex_1c0f0a: '#1C0F0A',
+    hex_26140b: '#26140b',
     hex_e1306c: '#E1306C',
     hex_34d399: '#34D399',
     hex_2e1911: '#2E1911',

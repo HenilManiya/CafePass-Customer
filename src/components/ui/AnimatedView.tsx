@@ -44,7 +44,7 @@ export function AnimatedView({ from, animate, transition, style, children, point
         
         const config: any = {
           toValue: targetAnimate[key],
-          useNativeDriver: key !== 'width' && key !== 'height',
+          useNativeDriver: false,
           delay
         };
 
