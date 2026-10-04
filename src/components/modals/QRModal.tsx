@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Dimensions, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, Dimensions, StyleSheet, Animated } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { MotiView, AnimatePresence } from 'moti';
-import { X, RefreshCw, Clock } from '@/components/Icon';
+import { X, RefreshCw } from '@/components/Icon';
 import { Colors } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 
@@ -15,10 +14,7 @@ interface QRModalProps {
   error: string | null;
   qrToken: string | null;
   onRetry: () => void;
-  isExpired: boolean;
-  isExpiringSoon: boolean;
-  minutes: number;
-  seconds: number;
+  cafeLogo?: string;
 }
 
 export function QRModal({
@@ -28,30 +24,75 @@ export function QRModal({
   error,
   qrToken,
   onRetry,
-  isExpired,
-  isExpiringSoon,
-  minutes,
-  seconds
+  cafeLogo
 }: QRModalProps) {
-  if (!isVisible) return null;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(600)).current;
+  const qrOpacity = useRef(new Animated.Value(0)).current;
+  const qrScale = useRef(new Animated.Value(0.95)).current;
+  const [render, setRender] = useState(isVisible);
+
+  useEffect(() => {
+    if (isVisible) {
+      setRender(true);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(translateY, {
+          toValue: 0,
+          damping: 25,
+          stiffness: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 600,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setRender(false));
+    }
+  }, [isVisible, opacity, translateY]);
+
+  useEffect(() => {
+    if (qrToken && isVisible) {
+      qrOpacity.setValue(0);
+      qrScale.setValue(0.95);
+      Animated.parallel([
+        Animated.timing(qrOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(qrScale, {
+          toValue: 1,
+          friction: 5,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [qrToken, isVisible, qrOpacity, qrScale]);
+
+  if (!render) return null;
 
   return (
     <View style={styles.modalOverlay} pointerEvents="box-none">
-      <MotiView
-        from={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        style={styles.modalBackdrop}
-      >
+      <Animated.View style={[styles.modalBackdrop, { opacity }]}>
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
-      </MotiView>
+      </Animated.View>
 
-      <MotiView
-        from={{ translateY: 600 }}
-        animate={{ translateY: 0 }}
-        exit={{ translateY: 600 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        style={styles.modalSheet}
+      <Animated.View
+        style={[styles.modalSheet, { transform: [{ translateY }] }]}
         pointerEvents="box-none"
       >
         <View style={styles.modalInner}>
@@ -89,51 +130,27 @@ export function QRModal({
                   </TouchableOpacity>
                 </View>
               ) : qrToken ? (
-                <AnimatePresence exitBeforeEnter>
-                  <MotiView
-                    key={qrToken}
-                    from={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <QRCode
-                      value={qrToken}
-                      size={width * 0.45}
-                      color={Colors.dark.background}
-                      backgroundColor="white"
-                      logo={require('../../../assets/images/icon.png')}
-                      logoSize={width * 0.1}
-                      logoBackgroundColor="white"
-                      logoBorderRadius={10}
-                      logoMargin={4}
-                    />
-                  </MotiView>
-                </AnimatePresence>
+                <Animated.View
+                  key={qrToken}
+                  style={{ opacity: qrOpacity, transform: [{ scale: qrScale }] }}
+                >
+                  <QRCode
+                    value={qrToken}
+                    size={width * 0.45}
+                    color={Colors.dark.background}
+                    backgroundColor="white"
+                    logo={cafeLogo ? { uri: cafeLogo } : undefined}
+                    logoSize={width * 0.12}
+                    logoBorderRadius={8}
+                    logoBackgroundColor="transparent"
+                    logoMargin={0}
+                  />
+                </Animated.View>
               ) : null}
             </View>
-
-            {!loading && !error && qrToken && (
-              <View style={styles.timerContainer}>
-                <View style={styles.timerRow}>
-                  <Clock size={16} color={isExpired ? Colors.dark.hex_ef4444 : isExpiringSoon ? Colors.dark.hex_f59e0b : 'white'} />
-                  <Text style={[styles.timerText, { color: isExpired ? Colors.dark.hex_ef4444 : isExpiringSoon ? Colors.dark.hex_f59e0b : 'white' }]}>
-                    {isExpired ? 'QR Expired' : `Expires in ${minutes}:${seconds.toString().padStart(2, '0')}`}
-                  </Text>
-                </View>
-                {isExpired && (
-                  <TouchableOpacity
-                    onPress={onRetry}
-                    style={styles.generateNewBtn}
-                  >
-                    <RefreshCw size={14} color="white" />
-                    <Text style={styles.generateNewText}>Generate New QR</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
           </View>
         </View>
-      </MotiView>
+      </Animated.View>
     </View>
   );
 }
@@ -198,7 +215,7 @@ const styles = StyleSheet.create({
   },
   qrContainer: {
     backgroundColor: Colors.dark.text,
-    padding: 24,
+    padding: 12,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
@@ -244,36 +261,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  timerContainer: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.dark.border,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 999,
-  },
-  timerText: {
-    fontWeight: 'bold',
-    marginLeft: 10,
-    fontSize: 15,
-  },
-  generateNewBtn: {
-    backgroundColor: Colors.dark.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  generateNewText: {
-    color: Colors.dark.text,
-    fontWeight: 'bold',
-    fontSize: 12,
-    marginLeft: 8,
-  },
+
 });

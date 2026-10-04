@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { useRouter } from 'expo-router';
 import { QrCode } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, Linking, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/context/AuthContext';
 import { supabase } from '@/shared';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { ChevronLeft, QrCode, MapPin, Camera, Phone } from '@/components/Icon';
 import { CafeHeader } from '@/components/CafeHeader';
 import { CafePassLogo } from '@/components/CafePassLogo';
@@ -17,7 +17,6 @@ import { ScrollView } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 
-const QR_TTL_SECONDS = 2 * 60;
 
 export default function CafeCardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,14 +27,11 @@ export default function CafeCardScreen() {
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(QR_TTL_SECONDS);
-  const [refreshing, setRefreshing] = useState(false);
   const [card, setCard] = useState<any>(null);
   const [cafeDetails, setCafeDetails] = useState<any>(null);
   const [rewardsAvailable, setRewardsAvailable] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isQRModalVisible, setIsQRModalVisible] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [animatingPunch, setAnimatingPunch] = useState<{ active: boolean, targetPunches: number } | null>(null);
 
   const animatingRef = useRef(false);
@@ -62,61 +58,57 @@ export default function CafeCardScreen() {
   };
 
   const cardRef = useRef<any>(null);
-  const cafeRef = useRef<any>(null);
   useEffect(() => {
     cardRef.current = card;
   }, [card]);
-  useEffect(() => {
-    cafeRef.current = cafeDetails;
-  }, [cafeDetails]);
 
   const fetchCardDetails = useCallback(async () => {
     if (!session || !id) return;
 
-    const [cardRes, cafeRes, rewardsRes] = await Promise.all([
-      supabase
-        .from('digital_cards')
-        .select('*, cafes(max_punches)')
-        .eq('customer_id', session.user.id)
-        .eq('cafe_id', id)
-        .eq('is_completed', false)
-        .maybeSingle(),
-      supabase
-        .from('cafes')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle(),
-      supabase
-        .from('rewards')
-        .select('id')
-        .eq('customer_id', session.user.id)
-        .eq('cafe_id', id)
-        .eq('status', 'AVAILABLE'),
-    ]);
+    // Perform a single query to fetch cafe details, along with the user's active card and available rewards
+    const { data: cafeData } = await supabase
+      .from('cafes')
+      .select(`
+        *,
+        digital_cards (*),
+        rewards (id)
+      `)
+      .eq('id', id)
+      .eq('digital_cards.customer_id', session.user.id)
+      .eq('digital_cards.is_completed', false)
+      .eq('rewards.customer_id', session.user.id)
+      .eq('rewards.status', 'AVAILABLE')
+      .maybeSingle();
 
-    if (cardRes.data) {
-      setCard((prev: any) => {
-        const max = cafeRef.current?.max_punches || prev?.cafes?.max_punches || 10;
-        if (prev && prev.punch_count >= max && cardRes.data.punch_count === 0) {
-          return prev;
-        }
-        return cardRes.data;
-      });
+    if (cafeData) {
+      // Extract nested data
+      const activeCard = cafeData.digital_cards?.[0] || null;
+      const rewardsCount = cafeData.rewards?.length || 0;
+
+      setCafeDetails(cafeData);
+
+      if (activeCard) {
+        // The original code expected the card to have a nested 'cafes' object with max_punches
+        activeCard.cafes = { max_punches: cafeData.max_punches };
+
+        setCard((prev: any) => {
+          const max = cafeData.max_punches || prev?.cafes?.max_punches || 10;
+          if (prev && prev.punch_count >= max && activeCard.punch_count === 0) {
+            return prev;
+          }
+          return activeCard;
+        });
+      }
+
+      setRewardsAvailable(rewardsCount);
     }
-
-    if (cafeRes.data) {
-      setCafeDetails(cafeRes.data);
-    }
-
-    setRewardsAvailable(rewardsRes.data?.length || 0);
   }, [id, session]);
 
   const fetchQRToken = useCallback(async (isManual = false) => {
     if (!id || !session) return;
     console.log(`[cafe-card] Fetching QR token for cafe: ${id} (manual: ${isManual})`);
 
-    if (isManual) setRefreshing(true);
-    else setLoading(true);
+    if (!isManual) setLoading(true);
     setError(null);
 
     try {
@@ -135,34 +127,17 @@ export default function CafeCardScreen() {
 
       console.log('[cafe-card] ✅ Got JWT token, sessionId:', data?.sessionId, 'expiresAt:', data?.expiresAt);
       setQrToken(data.token);
-      setSecondsLeft(QR_TTL_SECONDS);
     } catch (e: any) {
       setError(e.message || 'Failed to generate QR. Please try again.');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [id, session]);
 
   useEffect(() => {
     fetchCardDetails();
-  }, [fetchCardDetails]);
+  }, []);
 
-  useEffect(() => {
-    if (!qrToken || !isQRModalVisible) return;
-
-    const interval = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [qrToken, isQRModalVisible]);
 
   const handleOpenQR = () => {
     setIsQRModalVisible(true);
@@ -170,10 +145,6 @@ export default function CafeCardScreen() {
   };
 
   const userId = session?.user?.id;
-  const fetchCardDetailsRef = useRef(fetchCardDetails);
-  useEffect(() => {
-    fetchCardDetailsRef.current = fetchCardDetails;
-  }, [fetchCardDetails]);
 
   useEffect(() => {
     if (!userId || !id) return;
@@ -201,17 +172,20 @@ export default function CafeCardScreen() {
 
             if (newPunches > currentPunches) {
               if (!cardRef.current || isNewCard) {
-                setCard({ ...newRecord, punch_count: currentPunches });
+                setCard((prev: any) => ({
+                  ...newRecord,
+                  punch_count: currentPunches,
+                  cafes: prev?.cafes
+                }));
               }
               animatingRef.current = true;
-              
+
               const targetIndex = newPunches - 1;
               const slotEl = slotRefs.current[targetIndex];
               const containerEl = punchCardContainerRef.current;
-              
+
               const startAnimation = () => {
                 setAnimatingPunch({ active: true, targetPunches: newPunches });
-                setSecondsLeft(15);
                 setIsQRModalVisible(false);
               };
 
@@ -233,12 +207,14 @@ export default function CafeCardScreen() {
                 startAnimation();
               }
             } else if (!newRecord.is_completed && !animatingRef.current) {
-              const max = cafeRef.current?.max_punches || 10;
+              const max = cafeDetails?.max_punches || 10;
               if (cardRef.current?.punch_count >= max && newPunches === 0) {
                 // Do nothing
               } else {
-                setCard(newRecord);
-                fetchCardDetailsRef.current();
+                setCard((prev: any) => ({
+                  ...newRecord,
+                  cafes: prev?.cafes
+                }));
               }
               setIsQRModalVisible(false);
             }
@@ -253,9 +229,16 @@ export default function CafeCardScreen() {
           table: 'rewards',
           filter: `customer_id=eq.${userId}`,
         },
-        (payload) => {
+        (payload: any) => {
           console.log('[realtime] Rewards updated!');
-          fetchCardDetailsRef.current();
+          const { eventType, new: newRec } = payload;
+          if (newRec && newRec.cafe_id === id) {
+            if (eventType === 'INSERT' && newRec.status === 'AVAILABLE') {
+              setRewardsAvailable((prev) => prev + 1);
+            } else if (eventType === 'UPDATE' && newRec.status !== 'AVAILABLE') {
+              setRewardsAvailable((prev) => Math.max(0, prev - 1));
+            }
+          }
         }
       )
       .subscribe((status) => {
@@ -266,7 +249,7 @@ export default function CafeCardScreen() {
       console.log('[realtime] Unsubscribing channel...');
       supabase.removeChannel(channel);
     };
-  }, [id, userId]);
+  }, [id, userId, cafeDetails]);
 
   const handleStampHit = () => {
     if (animatingPunch) {
@@ -286,24 +269,8 @@ export default function CafeCardScreen() {
 
     if (isCompleted) {
       setShowConfetti(true);
-      if (session?.user?.id) {
-        supabase
-          .from('rewards')
-          .select('id')
-          .eq('customer_id', session.user.id)
-          .eq('cafe_id', id)
-          .eq('status', 'AVAILABLE')
-          .then(({ data }) => setRewardsAvailable(data?.length || 0));
-      }
-    } else {
-      fetchCardDetails();
     }
   };
-
-  const minutes = Math.floor(secondsLeft / 60);
-  const seconds = secondsLeft % 60;
-  const isExpired = secondsLeft <= 0;
-  const isExpiringSoon = secondsLeft <= 15 && !isExpired;
 
   return (
     <View style={styles.container}>
@@ -358,7 +325,7 @@ export default function CafeCardScreen() {
             )}
 
             {(card || cafeDetails) && (
-              <PunchCard 
+              <PunchCard
                 punchCardContainerRef={punchCardContainerRef}
                 cafeDetails={cafeDetails}
                 card={card}
@@ -411,17 +378,14 @@ export default function CafeCardScreen() {
           </MotiView>
         </ScrollView>
 
-        <QRModal 
+        <QRModal
           isVisible={isQRModalVisible}
           onClose={() => setIsQRModalVisible(false)}
           loading={loading}
           error={error}
           qrToken={qrToken}
           onRetry={() => fetchQRToken(true)}
-          isExpired={isExpired}
-          isExpiringSoon={isExpiringSoon}
-          minutes={minutes}
-          seconds={seconds}
+          cafeLogo={cafeDetails?.logo_url}
         />
         <ConfettiBurst visible={showConfetti} />
       </SafeAreaView>

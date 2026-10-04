@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { CafePassLogo } from '@/components/CafePassLogo';
 import { LogOut } from '@/components/Icon';
 import { Colors } from '@/constants/Colors';

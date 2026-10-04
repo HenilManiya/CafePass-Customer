@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/shared';
 import { useAuthStore } from '@/context/AuthContext';
 import { LogOut } from '@/components/Icon';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { LinearGradient } from '@/components/LinearGradient';
 import { HomeHeader } from '@/components/ui/HomeHeader';
 import { DigitalCard } from '@/components/cards/DigitalCard';

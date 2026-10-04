@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { Colors } from '@/constants/Colors';
 
 export function ScanFrame() {

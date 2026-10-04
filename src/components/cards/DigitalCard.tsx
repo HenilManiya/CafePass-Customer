@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
-import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
 import { CafeHeader } from '@/components/CafeHeader';
 import { Colors } from '@/constants/Colors';
@@ -20,12 +19,7 @@ export function DigitalCard({ item, index }: DigitalCardProps) {
   const rewards = item?.rewards_available || 0;
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 30 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ delay: index * 100 }}
-      style={styles.cardContainer}
-    >
+    <View style={styles.cardContainer}>
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => router.push(`/cafe/${item.cafe_id}`)}
@@ -73,18 +67,15 @@ export function DigitalCard({ item, index }: DigitalCardProps) {
               </View>
               
               <View style={styles.progressBarTrack}>
-                <MotiView
+                <View
                   style={[styles.progressBarFill, { width: `${progress}%` }]}
-                  from={{ translateX: -300 }}
-                  animate={{ translateX: 0 }}
-                  transition={{ type: 'spring', damping: 14, delay: index * 100 + 300 }}
                 />
               </View>
             </View>
           </View>
         </View>
       </TouchableOpacity>
-    </MotiView>
+    </View>
   );
 }
 

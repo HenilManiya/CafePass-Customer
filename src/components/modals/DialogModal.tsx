@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { MotiView, AnimatePresence } from 'moti';
+import { AnimatedView as MotiView, AnimatePresence } from '@/components/ui/AnimatedView';
 import { Colors } from '@/constants/Colors';
 import { Typography } from '@/constants/Typography';
 import { AlertCircle, CheckCircle2, Info } from '@/components/Icon';

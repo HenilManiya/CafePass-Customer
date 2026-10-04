@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { Coffee } from '@/components/Icon';
 import { AnimatedBarista } from '@/components/AnimatedBarista';
 import { Colors } from '@/constants/Colors';

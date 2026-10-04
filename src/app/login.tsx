@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/context/AuthContext';
 import { supabase } from '@/shared';
 import { Coffee } from '@/components/Icon';
-import { MotiView } from 'moti';
+import { AnimatedView as MotiView } from '@/components/ui/AnimatedView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from '@/components/LinearGradient';
 import { CafePassLogo } from '@/components/CafePassLogo';
